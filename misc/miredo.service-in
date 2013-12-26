@@ -3,7 +3,7 @@ Description=Teredo IPv6 tunneling
 After=network.target
 
 [Service]
-ExecStartpre=@sbindir@/miredo-checkconf -f @sysconfdir@/miredo/miredo.conf
+ExecStartPre=@sbindir@/miredo-checkconf -f @sysconfdir@/miredo/miredo.conf
 ExecStart=@sbindir@/miredo -f
 ExecReload=/bin/kill -HUP $MAINPID
 
