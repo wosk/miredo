@@ -55,7 +55,7 @@ static void logger (void *fail, bool error, const char *fmt, va_list ap)
 /* FIXME: use same more clever code as in main.c */
 static const char conffile[] = SYSCONFDIR"/miredo/miredo.conf";
 
-static int miredo_checkconf (miredo_conf *conf)
+static int miredo_checkconf (miredo_conf *conf, bool resolve)
 {
 	int i, res = 0;
 	if (!miredo_conf_parse_syslog_facility (conf, "SyslogFacility", &i))
@@ -94,8 +94,9 @@ static int miredo_checkconf (miredo_conf *conf)
 #ifdef MIREDO_TEREDO_CLIENT
 		uint32_t ip = 0;
 
-		if (!miredo_conf_parse_IPv4 (conf, "ServerAddress", &ip)
-		 || !miredo_conf_parse_IPv4 (conf, "ServerAddress2", &u32))
+		if (resolve
+		 && (!miredo_conf_parse_IPv4 (conf, "ServerAddress", &ip)
+		  || !miredo_conf_parse_IPv4 (conf, "ServerAddress2", &u32)))
 			res = -1;
 
 		if (ip == 0)
@@ -104,6 +105,7 @@ static int miredo_checkconf (miredo_conf *conf)
 			res = -1;
 		}
 #else
+		(void) resolve;
 		fprintf (stderr, "%s\n", _("Unsupported Teredo client mode"));
 		res = -1;
 #endif
@@ -129,7 +131,7 @@ static int miredo_checkconf (miredo_conf *conf)
 }
 
 
-static int miredo_checkconffile (const char *filename)
+static int miredo_checkconffile (const char *filename, bool resolve)
 {
 	bool failed = false;
 	miredo_conf *conf = miredo_conf_create (logger, &failed);
@@ -140,7 +142,7 @@ static int miredo_checkconffile (const char *filename)
 	if (!miredo_conf_read_file (conf, filename))
 		failed = true;
 	else
-	if (miredo_checkconf (conf))
+	if (miredo_checkconf (conf, resolve))
 		failed = true;
 
 	miredo_conf_destroy (conf);
@@ -176,6 +178,7 @@ int main(int argc, char *argv[])
 		{ "foreground", no_argument,       NULL, 'f' },
 		{ "help",       no_argument,       NULL, 'h' },
 		{ "pidfile",    required_argument, NULL, 'p' },
+		{ "resolve",	no_argument,       NULL, 'r' },
 		{ "chroot",     required_argument, NULL, 't' },
 		{ "chrootdir",  required_argument, NULL, 't' },
 		{ "user",       required_argument, NULL, 'u' },
@@ -185,9 +188,10 @@ int main(int argc, char *argv[])
 	};
 
 	const char *filename = NULL;
+	bool resolve = false;
 
 	int c;
-	while ((c = getopt_long (argc, argv, "c:fhp:t:u:V", opts, NULL)) != -1)
+	while ((c = getopt_long (argc, argv, "c:fhp:rt:u:V", opts, NULL)) != -1)
 		switch (c)
 		{
 			case 'c':
@@ -196,6 +200,10 @@ int main(int argc, char *argv[])
 
 			case 'h':
 				return usage(argv[0]);
+
+			case 'r':
+				resolve = true;
+				break;
 
 			case 'V':
 				return miredo_version();
@@ -215,7 +223,7 @@ int main(int argc, char *argv[])
 			filename = conffile;
 	}
 
-	int res = miredo_checkconffile (filename);
+	int res = miredo_checkconffile (filename, resolve);
 
 	if (path != NULL)
 		free (path);
