@@ -99,7 +99,7 @@ static void teredo_peer_queue (teredo_peer *restrict peer,
 		return;
 	peer->queue_left -= len;
 
-	p = (teredo_queue *)malloc (sizeof (*p) + len);
+	p = malloc (sizeof (*p) + len);
 	p->length = len;
 	memcpy (p->data, data, len);
 	p->ipv4 = ip;

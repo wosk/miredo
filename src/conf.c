@@ -64,7 +64,7 @@ struct miredo_conf
 
 miredo_conf *miredo_conf_create (miredo_conf_logger logger, void *opaque)
 {
-	miredo_conf *conf = (miredo_conf *)malloc (sizeof (*conf));
+	miredo_conf *conf = malloc (sizeof (*conf));
 	if (conf == NULL)
 		return NULL;
 
@@ -161,8 +161,7 @@ miredo_conf_set (miredo_conf *conf, const char *name, const char *value,
 	assert (name != NULL);
 	assert (value != NULL);
 
-	struct setting *parm =
-		(struct setting *)malloc (sizeof (struct setting));
+	struct setting *parm = malloc (sizeof (*parm));
 
 	if (parm != NULL)
 	{
