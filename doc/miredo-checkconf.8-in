@@ -17,7 +17,7 @@
 .SH NAME
 miredo-checkconf \- Miredo configuration file syntax checking tool
 .SH SYNOPSIS
-.BR "miredo-checkconf" " [" "config_file" "]"
+.BR "miredo-checkconf" " [" "-r" "] [" "config_file" "]"
 
 .SH DESCRIPTON
 .B miredo-checkconf
@@ -30,6 +30,14 @@ incorrect, contained unused directives or if the file could not be opened.
 .TP
 .BR "\-h" " or " "\-\-help"
 Display some help and exit.
+
+.TP
+.BR "\-r" " or " "\-\-resolve"
+Resolve the Teredo server address(es). If a domain name is specified
+(rather than a numerical IPv4 address) and the domain name resolution
+fails, the configuration file will be deemed invalid.
+
+Without this option, the Teredo server address is not checked.
 
 .TP
 .BR "\-V" " or " "\-\-version"
