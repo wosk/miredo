@@ -284,11 +284,10 @@ teredo_peerlist *teredo_list_create (unsigned max, unsigned expiration)
 	        sizeof (teredo_listitem));*/
 	assert (expiration > 0);
 
-	teredo_peerlist *l = (teredo_peerlist *)malloc (sizeof (*l));
+	teredo_peerlist *l = calloc (1, sizeof (*l));
 	if (l == NULL)
 		return NULL;
 
-	memset (l, 0, sizeof (l));
 	pthread_mutex_init (&l->lock, NULL);
 	l->recent = l->old = NULL;
 	l->left = max;
