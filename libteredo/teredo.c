@@ -309,20 +309,8 @@ int teredo_recv (int fd, struct teredo_packet *p)
 }
 
 
-#if defined (__FreeBSD__) || defined (__APPLE__)
-# define HAVE_BROKEN_RECVFROM 1
-# include <sys/poll.h>
-#endif
-
 int teredo_wait_recv (int fd, struct teredo_packet *p)
 {
-#ifdef HAVE_BROKEN_RECVFROM
-	// recvfrom() is not a cancellation point on FreeBSD 6.1...
-	struct pollfd ufd = { .fd = fd, .events = POLLIN };
-	if (poll (&ufd, 1, -1) == -1)
-		return -1;
-#endif
-
 	return teredo_recv_inner (fd, p, 0);
 }
 
