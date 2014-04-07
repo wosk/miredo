@@ -76,13 +76,10 @@ teredo_iothread *teredo_iothread_start (teredo_iothread_proc proc,
 }
 
 
-void teredo_iothread_stop (teredo_iothread *io, bool close)
+void teredo_iothread_stop (teredo_iothread *io)
 {
 	pthread_cancel (io->thread);
 	pthread_join (io->thread, NULL);
-
-	if (close)
-		teredo_close (io->fd);
 
 #ifndef NDEBUG
 	debug ("IO thread stopped (%p)", io);

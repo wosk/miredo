@@ -46,9 +46,8 @@ teredo_iothread *teredo_iothread_start (teredo_iothread_proc proc,
  * Stop an IO thread and destroy the teredo_iothread object.
  *
  * @param io the IO thread to stop.
- * @param close whether to close the file descriptor associted with it.
  */
-void teredo_iothread_stop (teredo_iothread *io, bool close);
+void teredo_iothread_stop (teredo_iothread *io);
 
 # ifdef __cplusplus
 }

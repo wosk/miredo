@@ -56,6 +56,7 @@
 struct teredo_discovery
 {
 	int refcnt;
+	int fd;
 	struct teredo_discovery_interface
 	{
 		uint32_t addr;
@@ -226,8 +227,8 @@ teredo_discovery_start (const teredo_discovery_params *params,
 
 	/* Setup the multicast-receiving socket */
 
-	int sk = teredo_socket (0, htons (IPPORT_TEREDO));
-	if (sk < 0)
+	d->fd = teredo_socket (0, htons (IPPORT_TEREDO));
+	if (d->fd == -1)
 	{
 		debug ("Could not create the local discovery socket");
 		free (d->ifaces);
@@ -236,9 +237,9 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	}
 
 	for (ifno = 0; d->ifaces[ifno].addr; ifno++)
-		teredo_discovery_joinmcast (sk, d->ifaces[ifno].addr);
+		teredo_discovery_joinmcast (d->fd, d->ifaces[ifno].addr);
 
-	d->recv = teredo_iothread_start (proc, opaque, sk);
+	d->recv = teredo_iothread_start (proc, opaque, d->fd);
 
 	/* Start the discovery procedure thread */
 
@@ -279,15 +280,16 @@ void teredo_discovery_stop (teredo_discovery *d)
 {
 	if (d->send)
 	{
-		teredo_iothread_stop (d->send, false);
+		teredo_iothread_stop (d->send);
 		d->send = NULL;
 	}
 	if (d->recv)
 	{
-		teredo_iothread_stop (d->recv, true);
+		teredo_iothread_stop (d->recv);
 		d->recv = NULL;
 	}
 
+	teredo_close(d->fd);
 	teredo_discovery_release(d);
 }
 
