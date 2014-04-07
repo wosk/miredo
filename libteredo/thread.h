@@ -1,5 +1,5 @@
 /**
- * @file iothread.h
+ * @file thread.h
  * @brief IO thread management
  */
 
@@ -27,7 +27,7 @@
 extern "C" {
 # endif
 
-typedef struct teredo_iothread teredo_iothread;
+typedef pthread_t teredo_thread;
 
 /**
  * Start a new IO thread.
@@ -37,17 +37,31 @@ typedef struct teredo_iothread teredo_iothread;
  *
  * @return the new IO thread on success, NULL on error.
  */
-teredo_iothread *teredo_iothread_start (void *(*proc)(void *), void *opaque);
+static inline
+teredo_thread *teredo_thread_start (void *(*proc)(void *), void *opaque)
+{
+	teredo_thread *th = malloc (sizeof (*th));
+	if (th == NULL)
+		return NULL;
 
-/**
- * Stop an IO thread and destroy the teredo_iothread object.
- *
- * @param io the IO thread to stop.
- */
-void teredo_iothread_stop (teredo_iothread *io);
+	if (pthread_create (th, NULL, proc, opaque))
+	{
+		free (th);
+		th = NULL;
+	}
+
+	return th;
+}
+
+static inline
+void teredo_thread_stop (teredo_thread *th)
+{
+	pthread_cancel (*th);
+	pthread_join (*th, NULL);
+	free (th);
+}
 
 # ifdef __cplusplus
 }
 # endif /* ifdef __cplusplus */
-#endif /* ifndef LIBTEREDO_IOTHREAD_H */
-
+#endif /* ifndef LIBTEREDO_THREAD_H */

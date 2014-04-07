@@ -51,7 +51,7 @@
 #include "maintain.h"
 #include "clock.h"
 #include "peerlist.h"
-#include "iothread.h"
+#include "thread.h"
 #ifdef MIREDO_TEREDO_CLIENT
 # include "security.h"
 # include "discovery.h"
@@ -88,7 +88,7 @@ struct teredo_tunnel
 	} ratelimit;
 
 	// Asynchronous packet reception
-	teredo_iothread *recv;
+	teredo_thread *recv;
 
 	int fd;
 };
@@ -1085,7 +1085,7 @@ void teredo_destroy (teredo_tunnel *t)
 #endif
 
 	if (t->recv != NULL)
-		teredo_iothread_stop (t->recv);
+		teredo_thread_stop (t->recv);
 
 	teredo_list_destroy (t->list);
 	pthread_rwlock_destroy (&t->state_lock);
@@ -1128,7 +1128,7 @@ int teredo_run_async (teredo_tunnel *t)
 	if (t->recv)
 		return -1;
 
-	t->recv = teredo_iothread_start (teredo_recv_thread, t);
+	t->recv = teredo_thread_start (teredo_recv_thread, t);
 	if (t->recv == NULL)
 		return -1;
 

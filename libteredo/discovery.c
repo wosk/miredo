@@ -48,7 +48,7 @@
 #include "security.h"
 #include "clock.h"
 #include "debug.h"
-#include "iothread.h"
+#include "thread.h"
 #include "tunnel.h"
 #include "discovery.h"
 
@@ -66,8 +66,8 @@ struct teredo_discovery
 		uint32_t mask;
 	} *ifaces;
 	struct in6_addr src;
-	teredo_iothread *recv;
-	teredo_iothread *send;
+	teredo_thread *recv;
+	teredo_thread *send;
 };
 
 
@@ -252,7 +252,7 @@ teredo_discovery_start (const teredo_discovery_params *params,
 
 	d->opaque = opaque;
 	d->proc = proc;
-	d->recv = teredo_iothread_start (teredo_discovery_thread, d);
+	d->recv = teredo_thread_start (teredo_discovery_thread, d);
 
 	/* Start the discovery procedure thread */
 
@@ -260,7 +260,7 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	setsockopt (fd, IPPROTO_IP, IP_MULTICAST_LOOP, &(int){0}, sizeof (int));
 
 	d->mcast_fd = fd;
-	d->send = teredo_iothread_start (teredo_sendmcast_thread, d);
+	d->send = teredo_thread_start (teredo_sendmcast_thread, d);
 
 	return d;
 }
@@ -294,12 +294,12 @@ void teredo_discovery_stop (teredo_discovery *d)
 {
 	if (d->send)
 	{
-		teredo_iothread_stop (d->send);
+		teredo_thread_stop (d->send);
 		d->send = NULL;
 	}
 	if (d->recv)
 	{
-		teredo_iothread_stop (d->recv);
+		teredo_thread_stop (d->recv);
 		d->recv = NULL;
 	}
 
