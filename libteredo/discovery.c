@@ -101,9 +101,9 @@ void SendDiscoveryBubble (teredo_discovery *d, int fd)
 			continue;
 		}
 
-		teredo_send_bubble_anyway (fd, htonl (TEREDO_DISCOVERY_IPV4),
-		                               htons (IPPORT_TEREDO),
-		                               &d->src, &in6addr_allnodes);
+		teredo_send_bubble (fd, htonl (TEREDO_DISCOVERY_IPV4),
+		                    htons (IPPORT_TEREDO),
+		                    &d->src, &in6addr_allnodes);
 	}
 
 	debug ("discovery bubble sent");

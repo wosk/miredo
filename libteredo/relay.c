@@ -508,8 +508,8 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 
 		if (res == 0)
 		{
-			teredo_send_bubble_anyway (tunnel->fd, addr, port,
-			                           &s.addr.ip6, &dst->ip6);
+			teredo_send_bubble (tunnel->fd, addr, port,
+			                    &s.addr.ip6, &dst->ip6);
 
 			pthread_rwlock_rdlock (&tunnel->state_lock);
 			teredo_discovery *d = NULL;
@@ -705,7 +705,7 @@ teredo_run_inner (teredo_tunnel *restrict tunnel,
 				port = IN6_TEREDO_PORT (&ip6->ip6_src);
 			}
 
-			if (ipv4)
+			if (is_ipv4_global_unicast (ipv4))
 			{
 				/* TODO: record sending of bubble, create a peer, etc ? */
 				teredo_reply_bubble (tunnel->fd, ipv4, port, ip6);
@@ -802,10 +802,9 @@ teredo_run_inner (teredo_tunnel *restrict tunnel,
 			return;
 
 		debug ("Replying to discovery bubble");
-		teredo_send_bubble_anyway (tunnel->fd,
-					   packet->source_ipv4,
-					   packet->source_port,
-					   &s.addr.ip6, &ip6->ip6_src);
+		teredo_send_bubble (tunnel->fd,
+		                    packet->source_ipv4, packet->source_port,
+		                    &s.addr.ip6, &ip6->ip6_src);
 		return;
 	}
 #endif

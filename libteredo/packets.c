@@ -40,7 +40,7 @@
 #include <sys/uio.h>
 
 #include "teredo.h"
-#include "v4global.h" // is_ipv4_global_unicast()
+#include "v4global.h"
 #include "teredo-udp.h"
 
 #include <time.h>
@@ -51,9 +51,8 @@
 
 
 int
-teredo_send_bubble_anyway (int fd, uint32_t ip, uint16_t port,
-                           const struct in6_addr *src,
-                           const struct in6_addr *dst)
+teredo_send_bubble (int fd, uint32_t ip, uint16_t port,
+                    const struct in6_addr *src, const struct in6_addr *dst)
 {
 	static const uint8_t head[] =
 		"\x60\x00\x00\x00" /* flow */
@@ -68,17 +67,6 @@ teredo_send_bubble_anyway (int fd, uint32_t ip, uint16_t port,
 	};
 
 	return teredo_sendv (fd, iov, 3, ip, port) == 40 ? 0 : -1;
-}
-
-
-int
-teredo_send_bubble (int fd, uint32_t ip, uint16_t port,
-                    const struct in6_addr *src, const struct in6_addr *dst)
-{
-	if (is_ipv4_global_unicast (ip))
-		return teredo_send_bubble_anyway(fd, ip, port, src, dst);
-	else
-		return 0; /* FIXME: really ? */
 }
 
 
@@ -99,6 +87,9 @@ SendBubbleFromDst (int fd, const struct in6_addr *dst, bool indirect)
 		ip = IN6_TEREDO_SERVER (dst);
 		port = htons (IPPORT_TEREDO);
 	}
+
+	if (!is_ipv4_global_unicast (ip))
+		return 0;
 
 	return teredo_send_bubble (fd, ip, port, &src, dst);
 }
