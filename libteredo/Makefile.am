@@ -49,7 +49,7 @@ endif
 libteredo_la_DEPENDENCIES = libteredo.sym $(LIBADD)
 libteredo_la_LIBADD = @LIBJUDY@ @LIBRT@ $(LTLIBINTL) $(LIBADD)
 libteredo_la_LDFLAGS = -no-undefined -export-symbols $(srcdir)/libteredo.sym \
-	-version-info 5:0:0
+	-version-info 6:0:0
 
 # libteredo versions:
 # 0) First stable shared release (0.8.2)
@@ -60,6 +60,8 @@ libteredo_la_LDFLAGS = -no-undefined -export-symbols $(srcdir)/libteredo.sym \
 # 4) added internal teredo_send_bubble, teredo_cksum (1.1.0)
 # -- backward compatibility break --
 # 5) added teredo_packet.dest_ipv4, removed teredo_set_cone_ignore() (1.1.7)
+# -- backward compatibility break --
+# 6) removed teredo_run() (1.3.0)
 
 # libteredo-server.la
 libteredo_server_la_SOURCES = server.c server.h
