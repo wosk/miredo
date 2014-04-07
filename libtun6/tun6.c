@@ -151,7 +151,7 @@ struct tun6
 tun6 *tun6_create (const char *req_name)
 {
 	(void)bindtextdomain (PACKAGE_NAME, LOCALEDIR);
-	tun6 *t = (tun6 *)malloc (sizeof (*t));
+	tun6 *t = malloc (sizeof (*t));
 	if (t == NULL)
 		return NULL;
 	memset (t, 0, sizeof (*t));

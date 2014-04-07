@@ -418,7 +418,7 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
                           unsigned q_sec, unsigned q_retries,
                           unsigned refresh_sec, unsigned restart_sec)
 {
-	teredo_maintenance *m = (teredo_maintenance *)malloc (sizeof (*m));
+	teredo_maintenance *m = malloc (sizeof (*m));
 
 	if (m == NULL)
 		return NULL;

@@ -99,7 +99,7 @@ static void teredo_peer_queue (teredo_peer *restrict peer,
 		return;
 	peer->queue_left -= len;
 
-	p = (teredo_queue *)malloc (sizeof (*p) + len);
+	p = malloc (sizeof (*p) + len);
 	p->length = len;
 	memcpy (p->data, data, len);
 	p->ipv4 = ip;
@@ -284,11 +284,10 @@ teredo_peerlist *teredo_list_create (unsigned max, unsigned expiration)
 	        sizeof (teredo_listitem));*/
 	assert (expiration > 0);
 
-	teredo_peerlist *l = (teredo_peerlist *)malloc (sizeof (*l));
+	teredo_peerlist *l = calloc (1, sizeof (*l));
 	if (l == NULL)
 		return NULL;
 
-	memset (l, 0, sizeof (l));
 	pthread_mutex_init (&l->lock, NULL);
 	l->recent = l->old = NULL;
 	l->left = max;
