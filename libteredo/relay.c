@@ -632,8 +632,8 @@ void teredo_predecap (teredo_tunnel *restrict tunnel,
  * Thread-safety: This function is thread-safe.
  */
 static void
-teredo_run_inner (teredo_tunnel *restrict tunnel,
-                  const struct teredo_packet *restrict packet)
+teredo_recv_process (teredo_tunnel *restrict tunnel,
+                     const struct teredo_packet *restrict packet)
 {
 	assert (tunnel != NULL);
 	assert (packet != NULL);
@@ -1106,7 +1106,7 @@ static LIBTEREDO_NORETURN void *teredo_recv_thread (void *t, int fd)
 		if (teredo_wait_recv (fd, &packet) == 0)
 		{
 			pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, NULL);
-			teredo_run_inner (tunnel, &packet);
+			teredo_recv_process (tunnel, &packet);
 			pthread_setcancelstate (PTHREAD_CANCEL_ENABLE, NULL);
 		}
 	}
