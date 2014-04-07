@@ -27,9 +27,11 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <sched.h>
 
 #include "teredo.h"
 #include "tunnel.h"
@@ -64,9 +66,6 @@ int main (void)
 	val = teredo_set_relay_mode (tunnel);
 	assert (val == 0);
 
-	teredo_run (tunnel);
-	teredo_run (tunnel);
-
 	val = teredo_set_prefix (tunnel, htonl (0xff020000));
 	val = teredo_set_prefix (tunnel, htonl (TEREDO_PREFIX));
 	assert (val == 0);
@@ -84,6 +83,12 @@ int main (void)
 	teredo_set_recv_callback (tunnel, NULL);
 	teredo_set_icmpv6_callback (tunnel, NULL);
 	teredo_set_state_cb (tunnel, NULL, NULL);
+
+	teredo_run_async (tunnel);
+	teredo_run_async (tunnel);
+
+	sched_yield ();
+	nanosleep(&(struct timespec){ 0, 100000000 }, NULL);
 
 	teredo_destroy (tunnel);
 
