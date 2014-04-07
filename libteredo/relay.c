@@ -1129,19 +1129,6 @@ int teredo_run_async (teredo_tunnel *t)
 }
 
 
-void teredo_run (teredo_tunnel *tunnel)
-{
-	assert (tunnel != NULL);
-
-	struct teredo_packet packet;
-
-	if (teredo_recv (tunnel->fd, &packet))
-		return;
-
-	teredo_run_inner (tunnel, &packet);
-}
-
-
 int teredo_set_prefix (teredo_tunnel *t, uint32_t prefix)
 {
 	assert (t != NULL);

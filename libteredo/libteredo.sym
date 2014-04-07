@@ -12,7 +12,6 @@ teredo_set_prefix
 teredo_set_privdata
 teredo_set_recv_callback
 teredo_set_state_cb
-teredo_run
 teredo_run_async
 teredo_transmit
 teredo_cone

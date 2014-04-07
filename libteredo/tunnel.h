@@ -118,24 +118,11 @@ teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port);
 void teredo_destroy (teredo_tunnel *t);
 
 /**
- * Receives one pending packet coming from the Teredo tunnel. If you
- * don't use teredo_run_async(), you have to call this function as
- * often as possible. It is up to you to find the correct tradeoff
- * between busy waiting on this function for better response time of
- * the Teredo tunnel, and a long delay to not waste too much CPU
- * cycles. You should really consider using teredo_run_async() instead!
- * libteredo will spawn some threads even if you don't call
- * teredo_run_async() anyway...
- *
- * Thread-safety: This function is thread-safe.
- *
- * @param t Teredo tunnel instance
- */
-void teredo_run (teredo_tunnel *t);
-
-/**
  * Spawns a new thread to perform Teredo packet reception in the background.
  * The thread will be automatically terminated when the tunnel is destroyed.
+ * This function has to be called after the Teredo tunnel is configured
+ * (with the the teredo_set_*() functions); otherwise, incoming Teredo packets
+ * would not be processed.
  *
  * It is safe to call teredo_run_async multiple times for the same tunnel,
  * however all call will fail (safe) after the first succesful one.
