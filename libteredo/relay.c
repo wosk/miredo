@@ -174,7 +174,7 @@ TeredoRelay::EmitICMPv6Error (const void *packet, size_t length,
 
 
 #ifdef MIREDO_TEREDO_CLIENT
-static LIBTEREDO_NORETURN void *teredo_recv_thread (void *opaque, int fd);
+static void teredo_recv_loop (void *, int fd);
 
 static void
 teredo_state_change (const teredo_state *state, void *self)
@@ -215,7 +215,7 @@ teredo_state_change (const teredo_state *state, void *self)
 			d = teredo_discovery_start (tunnel->disc_params,
 			                            tunnel->fd,
 						    &tunnel->state.addr.ip6,
-						    teredo_recv_thread, tunnel);
+						    teredo_recv_loop, tunnel);
 			tunnel->discovery = d;
 		}
 	}
@@ -1095,9 +1095,9 @@ void teredo_destroy (teredo_tunnel *t)
 }
 
 
-static LIBTEREDO_NORETURN void *teredo_recv_thread (void *t, int fd)
+static LIBTEREDO_NORETURN void teredo_recv_loop (void *data, int fd)
 {
-	teredo_tunnel *tunnel = (teredo_tunnel *)t;
+	teredo_tunnel *tunnel = data;
 
 	for (;;)
 	{
@@ -1113,6 +1113,13 @@ static LIBTEREDO_NORETURN void *teredo_recv_thread (void *t, int fd)
 }
 
 
+static LIBTEREDO_NORETURN void *teredo_recv_thread (void *data)
+{
+	teredo_tunnel *tunnel = data;
+	teredo_recv_loop (tunnel, tunnel->fd);
+}
+
+
 int teredo_run_async (teredo_tunnel *t)
 {
 	assert (t != NULL);
@@ -1121,7 +1128,7 @@ int teredo_run_async (teredo_tunnel *t)
 	if (t->recv)
 		return -1;
 
-	t->recv = teredo_iothread_start (teredo_recv_thread, t, t->fd);
+	t->recv = teredo_iothread_start (teredo_recv_thread, t);
 	if (t->recv == NULL)
 		return -1;
 

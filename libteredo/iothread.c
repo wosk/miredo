@@ -37,21 +37,19 @@
 struct teredo_iothread
 {
 	pthread_t thread;
-	teredo_iothread_proc proc;
+	void *(*proc)(void *);
 	void *opaque;
-	int fd;
 };
 
 
 static void *teredo_iothread_run (void *data)
 {
-	teredo_iothread *io = (teredo_iothread *)data;
-	return io->proc (io->opaque, io->fd);
+	teredo_iothread *io = data;
+	return io->proc (io->opaque);
 }
 
 
-teredo_iothread *teredo_iothread_start (teredo_iothread_proc proc,
-                                        void *opaque, int fd)
+teredo_iothread *teredo_iothread_start (void *(*proc)(void *), void *opaque)
 {
 	teredo_iothread *io = malloc (sizeof *io);
 	if (io == NULL)
@@ -59,17 +57,16 @@ teredo_iothread *teredo_iothread_start (teredo_iothread_proc proc,
 
 	io->proc = proc;
 	io->opaque = opaque;
-	io->fd = fd;
 
 	if (pthread_create (&io->thread, NULL, teredo_iothread_run, io))
 	{
-		debug ("Could not create IO thread for fd %d.", fd);
+		debug ("Could not create IO thread");
 		free (io);
 		return NULL;
 	}
 
 #ifndef NDEBUG
-	debug ("IO thread started (%p, %p, %p, %d)", io, proc, opaque, fd);
+	debug ("IO thread started (%p, %p, %p)", io, proc, opaque);
 #endif
 
 	return io;

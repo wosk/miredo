@@ -56,7 +56,10 @@
 struct teredo_discovery
 {
 	int refcnt;
+	void (*proc)(void *, int);
+	void *opaque;
 	int fd;
+	int mcast_fd;
 	struct teredo_discovery_interface
 	{
 		uint32_t addr;
@@ -120,9 +123,10 @@ bool IsDiscoveryBubble (const teredo_packet *restrict packet)
 
 
 // 5.2.8  Optional Local Client Discovery Procedure
-static LIBTEREDO_NORETURN void *teredo_sendmcast_thread (void *opaque, int fd)
+static LIBTEREDO_NORETURN void *teredo_sendmcast_thread (void *opaque)
 {
 	teredo_discovery *d = (teredo_discovery *)opaque;
+	int fd = d->mcast_fd;
 
 	for (;;)
 	{
@@ -155,10 +159,17 @@ static void teredo_discovery_joinmcast(int sk, uint32_t ifaddr)
 }
 
 
+static LIBTEREDO_NORETURN void *teredo_discovery_thread (void *data)
+{
+	teredo_discovery *d = data;
+
+	d->proc (d->opaque, d->fd);
+}
+
 teredo_discovery *
 teredo_discovery_start (const teredo_discovery_params *params,
                         int fd, const struct in6_addr *src,
-                        teredo_iothread_proc proc, void *opaque)
+                        void (*proc)(void *, int fd), void *opaque)
 {
 	struct ifaddrs *ifaddrs, *ifa;
 	int r, ifno;
@@ -239,14 +250,17 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	for (ifno = 0; d->ifaces[ifno].addr; ifno++)
 		teredo_discovery_joinmcast (d->fd, d->ifaces[ifno].addr);
 
-	d->recv = teredo_iothread_start (proc, opaque, d->fd);
+	d->opaque = opaque;
+	d->proc = proc;
+	d->recv = teredo_iothread_start (teredo_discovery_thread, d);
 
 	/* Start the discovery procedure thread */
 
 	memcpy (&d->src, src, sizeof d->src);
 	setsockopt (fd, IPPROTO_IP, IP_MULTICAST_LOOP, &(int){0}, sizeof (int));
 
-	d->send = teredo_iothread_start (teredo_sendmcast_thread, d, fd);
+	d->mcast_fd = fd;
+	d->send = teredo_iothread_start (teredo_sendmcast_thread, d);
 
 	return d;
 }

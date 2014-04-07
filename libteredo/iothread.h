@@ -28,19 +28,16 @@ extern "C" {
 # endif
 
 typedef struct teredo_iothread teredo_iothread;
-typedef void *(*teredo_iothread_proc) (void *opaque, int fd);
 
 /**
  * Start a new IO thread.
  *
  * @param proc callback function to be run as the new thread.
  * @param opaque opaque pointer passed to @p proc.
- * @param fd file descriptor for this thread.
  *
  * @return the new IO thread on success, NULL on error.
  */
-teredo_iothread *teredo_iothread_start (teredo_iothread_proc proc,
-                                               void *opaque, int fd);
+teredo_iothread *teredo_iothread_start (void *(*proc)(void *), void *opaque);
 
 /**
  * Stop an IO thread and destroy the teredo_iothread object.

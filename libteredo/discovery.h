@@ -66,7 +66,7 @@ bool IsDiscoveryBubble (const teredo_packet *restrict packet);
 teredo_discovery *
 teredo_discovery_start (const teredo_discovery_params *params,
                         int fd, const struct in6_addr *src,
-                        teredo_iothread_proc proc, void *opaque);
+                        void (*proc)(void *, int fd), void *opaque);
 
 /**
  * Protects a @c teredo_discovery object from destruction until
