@@ -48,7 +48,6 @@ echo "Please put a link to it by hand as include/gettext.h"
 exit 1
 }
 sed \
-	-e 's,!__STRICT_ANSI__,!defined(__STRICT_ANSI__),g' \
 	-e 's,if ENABLE_NLS,ifdef ENABLE_NLS,g' \
 	-i include/gettext.h
 
