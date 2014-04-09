@@ -47,9 +47,6 @@ echo "Error: can't find <gettext.h> convenience C header."
 echo "Please put a link to it by hand as include/gettext.h"
 exit 1
 }
-sed \
-	-e 's,if ENABLE_NLS,ifdef ENABLE_NLS,g' \
-	-i include/gettext.h
 
 echo ""
 echo "Type \`./configure' to configure the package for your system"
