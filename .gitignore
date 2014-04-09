@@ -19,5 +19,6 @@ Makefile
 Makefile.in
 miredo
 miredo-checkconf
+miredo-privproc
 miredo-server
 stamp-*
