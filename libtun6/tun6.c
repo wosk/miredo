@@ -629,6 +629,7 @@ _iface_route (int reqfd, int id, bool add, const struct in6_addr *addr,
 		syslog (LOG_ERR, _("Error (%s): %m"), "socket (AF_ROUTE)");
 		return -1;
 	}
+	fcntl (s, F_SETFD, FD_CLOEXEC);
 
 	static int rtm_seq = 0;
 	static pthread_mutex_t rtm_seq_mutex = PTHREAD_MUTEX_INITIALIZER;
