@@ -54,9 +54,6 @@
 #ifndef SOL_ICMPV6
 # define SOL_ICMPV6 IPPROTO_ICMPV6
 #endif
-#ifndef PF_LOCAL
-# define PF_LOCAL PF_UNIX
-#endif
 
 #include <libtun6/tun6.h>
 
@@ -271,7 +268,7 @@ create_dynamic_tunnel (const char *ifname, int *pfd)
 		return NULL;
 
 	int fd[2];
-	if (socketpair (PF_LOCAL, SOCK_STREAM, 0, fd))
+	if (socketpair (AF_UNIX, SOCK_STREAM, 0, fd))
 		goto error;
 
 	miredo_setup_fd (fd[0]);
