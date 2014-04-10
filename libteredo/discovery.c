@@ -67,7 +67,7 @@ struct teredo_discovery
 	} *ifaces;
 	struct in6_addr src;
 	teredo_thread *recv;
-	teredo_thread *send;
+	pthread_t send;
 };
 
 
@@ -123,9 +123,9 @@ bool IsDiscoveryBubble (const teredo_packet *restrict packet)
 
 
 // 5.2.8  Optional Local Client Discovery Procedure
-static LIBTEREDO_NORETURN void *teredo_sendmcast_thread (void *opaque)
+static LIBTEREDO_NORETURN void *teredo_mcast_thread (void *opaque)
 {
-	teredo_discovery *d = (teredo_discovery *)opaque;
+	teredo_discovery *d = opaque;
 	int fd = d->mcast_fd;
 
 	for (;;)
@@ -260,8 +260,12 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	setsockopt (fd, IPPROTO_IP, IP_MULTICAST_LOOP, &(int){0}, sizeof (int));
 
 	d->mcast_fd = fd;
-	d->send = teredo_thread_start (teredo_sendmcast_thread, d);
-
+	if (pthread_create (&d->send, NULL, teredo_mcast_thread, d))
+	{
+		teredo_close (d->mcast_fd);
+		teredo_discovery_release (d);
+		d = NULL;
+	}
 	return d;
 }
 
@@ -282,7 +286,9 @@ void teredo_discovery_release (teredo_discovery *d)
 	if (--d->refcnt)
 		return;
 
-	assert (d->send == NULL); // ie. teredo_discovery_stop() has been called
+	pthread_cancel (d->send);
+	pthread_join (d->send, NULL);
+
 	assert (d->recv == NULL);
 
 	free (d->ifaces);
@@ -292,11 +298,6 @@ void teredo_discovery_release (teredo_discovery *d)
 
 void teredo_discovery_stop (teredo_discovery *d)
 {
-	if (d->send)
-	{
-		teredo_thread_stop (d->send);
-		d->send = NULL;
-	}
 	if (d->recv)
 	{
 		teredo_thread_stop (d->recv);
@@ -306,4 +307,3 @@ void teredo_discovery_stop (teredo_discovery *d)
 	teredo_close(d->fd);
 	teredo_discovery_release(d);
 }
-
