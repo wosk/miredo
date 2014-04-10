@@ -84,7 +84,15 @@ unsigned long teredo_clock (void)
 		pthread_mutex_t lock;
 		clockid_t       id;
 		bool            present;
-	} priv = { PTHREAD_MUTEX_INITIALIZER, CLOCK_REALTIME, false };
+	} priv = {
+		PTHREAD_MUTEX_INITIALIZER,
+#if (_POSIX_MONOTONIC_CLOCK > 0)
+		CLOCK_MONOTONIC
+#else
+		CLOCK_REALTIME,
+#endif
+		false
+	};
 
 	teredo_clock_t value;
 
@@ -97,14 +105,11 @@ unsigned long teredo_clock (void)
 		ev.sigev_notify = SIGEV_THREAD;
 		ev.sigev_value.sival_ptr = &clk;
 		ev.sigev_notify_function = clock_tick;
-
-#if (_POSIX_CLOCK_SELECTION - 0 >= 0) && (_POSIX_MONOTONIC_CLOCK - 0 >= 0)
+#if (_POSIX_MONOTONIC_CLOCK == 0)
 		/* Run-time POSIX monotonic clock detection */
-		struct timespec res;
-		if (clock_getres (CLOCK_MONOTONIC, &res) == 0)
+		if (sysconf (_SC_MONOTONIC_CLOCK) > 0)
 			priv.id = CLOCK_MONOTONIC;
 #endif
-
 		if (timer_create (priv.id, &ev, &clk.handle) == 0)
 			priv.present = true;
 	}
