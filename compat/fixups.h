@@ -74,15 +74,6 @@ EXTERN int clock_nanosleep (clockid_t id, int flags,
 
 #endif
 
-#ifndef HAVE_PTHREAD_CONDATTR_SETCLOCK
-/*
- * Of course, some libc versions define this to 0 even though they don't
- * provide the implementation. Otherwise, my life would be too easy.
- */
-# undef _POSIX_CLOCK_SELECTION
-# define _POSIX_CLOCK_SELECTION (-1)
-#endif
-
 #ifndef HAVE_FDATASYNC
 EXTERN int fdatasync (int fd);
 #endif

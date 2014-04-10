@@ -59,14 +59,10 @@
 
 static inline void gettime (struct timespec *now)
 {
-#if (_POSIX_CLOCK_SELECTION - 0 >= 0) && (_POSIX_MONOTONIC_CLOCK - 0 >= 0)
+#if (_POSIX_CLOCK_SELECTION > 0) && (_POSIX_MONOTONIC_CLOCK >= 0)
 	if (clock_gettime (CLOCK_MONOTONIC, now) == 0)
 		return;
 #else
-# define pthread_condattr_setclock( a, c ) (((c) != CLOCK_REALTIME) ? EINVAL : 0)
-# ifndef CLOCK_MONOTONIC
-#  define CLOCK_MONOTONIC CLOCK_REALTIME
-# endif
 # warning Monotonic clock is needed for proper Teredo maintenance!
 #endif
 	clock_gettime (CLOCK_REALTIME, now);
@@ -447,9 +443,9 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
 		pthread_condattr_t attr;
 
 		pthread_condattr_init (&attr);
-		(void)pthread_condattr_setclock (&attr, CLOCK_MONOTONIC);
-		/* EINVAL: CLOCK_MONOTONIC unknown */
-
+#if (_POSIX_CLOCK_SELECTION > 0) && (_POSIX_MONOTONIC_CLOCK >= 0)
+		pthread_condattr_setclock (&attr, CLOCK_MONOTONIC);
+#endif
 		pthread_cond_init (&m->received, &attr);
 		pthread_condattr_destroy (&attr);
 	}
