@@ -498,14 +498,20 @@ teredo_server *teredo_server_create (uint32_t ip1, uint32_t ip2)
 	}
 	if (raw_users++ == 0)
 	{
-		raw_fd = socket (AF_INET6, SOCK_RAW, IPPROTO_RAW);
+#ifdef SOCK_CLOEXEC
+		raw_fd = socket (AF_INET6, SOCK_RAW|SOCK_CLOEXEC, IPPROTO_RAW);
+		if (raw_fd == -1 && errno == EINVAL)
+#endif
+		{
+			raw_fd = socket (AF_INET6, SOCK_RAW, IPPROTO_RAW);
+			if (raw_fd != -1)
+				fcntl (raw_fd, F_SETFD, FD_CLOEXEC);
+		}
 		if (raw_fd != -1)
 		{
 			int flags = fcntl (raw_fd, F_GETFL, 0);
-			//shutdown (fd, SHUT_RD); -- won't work
 			fcntl (raw_fd, F_SETFL,
 			       O_NONBLOCK | ((flags != -1) ? flags : 0));
-			fcntl (raw_fd, F_SETFD, FD_CLOEXEC);
 		}
 	}
 	pthread_mutex_unlock (&raw_mutex);
