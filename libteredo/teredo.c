@@ -75,12 +75,19 @@ int teredo_socket (uint32_t bind_ip, uint16_t port)
 		.sin_port = port,
 		.sin_addr.s_addr = bind_ip
 	};
+	int fd;
 
-	int fd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (fd == -1)
-		return -1; // failure
+#ifdef SOCK_CLOEXEC
+	fd = socket (AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP);
+	if (fd == -1 && errno == EINVAL)
+#endif
+	{
+		fd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (fd == -1)
+			return -1; // failure
 
-	fcntl (fd, F_SETFD, FD_CLOEXEC);
+		fcntl (fd, F_SETFD, FD_CLOEXEC);
+	}
 
 	if (bind (fd, (struct sockaddr *)&myaddr, sizeof (myaddr)))
 	{
