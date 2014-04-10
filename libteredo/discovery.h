@@ -28,10 +28,6 @@
  */
 typedef struct teredo_discovery teredo_discovery;
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 /**
  * Tests whether a given IPv4 address belongs to one of the local networks
  * a given discovery object operates on.
@@ -91,7 +87,4 @@ void teredo_discovery_release (teredo_discovery *d);
  */
 void teredo_discovery_stop (teredo_discovery *d);
 
-# ifdef __cplusplus
-}
-# endif
 #endif /* ifndef LIBTEREDO_TEREDO_DISCOVERY_H */

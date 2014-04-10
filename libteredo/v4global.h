@@ -23,10 +23,6 @@
 #ifndef MIREDO_V4GLOBAL_H
 # define MIREDO_V4GLOBAL_H
 
-#ifdef __cplusplus
-extern "C"
-#endif
-
 /**
  * Checks that ip is a global unicast IPv4 address
  * (Values shoud maybe not be hardcoded that way).

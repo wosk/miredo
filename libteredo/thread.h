@@ -23,10 +23,6 @@
 #ifndef LIBTEREDO_IOTHREAD_H
 # define LIBTEREDO_IOTHREAD_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 typedef pthread_t teredo_thread;
 
 /**
@@ -60,8 +56,4 @@ void teredo_thread_stop (teredo_thread *th)
 	pthread_join (*th, NULL);
 	free (th);
 }
-
-# ifdef __cplusplus
-}
-# endif /* ifdef __cplusplus */
 #endif /* ifndef LIBTEREDO_THREAD_H */

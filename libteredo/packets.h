@@ -27,11 +27,6 @@ struct in6_addr;
 struct ip6_hdr;
 struct icmp6_hdr;
 
-# ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /**
  * Checks that the packet is an ICMPv6 Echo reply and authenticates it.
  *
@@ -165,10 +160,5 @@ int BuildICMPv6Error (struct icmp6_hdr *restrict out,
 int BuildIPv6Error (struct ip6_hdr *out, const struct in6_addr *src,
                     uint8_t type, uint8_t code, const void *in, uint16_t len);
 #endif
-
-# ifdef __cplusplus
-}
-#endif
-
 
 #endif

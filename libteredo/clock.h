@@ -36,16 +36,9 @@
  */
 typedef unsigned long teredo_clock_t;
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 /**
  * @return current clock value; undefined if the clock is not running.
  */
 teredo_clock_t teredo_clock (void);
 
-# ifdef __cplusplus
-}
-# endif /* ifdef __cplusplus */
 #endif /* ifndef LIBTEREDO_CLOCK_H */

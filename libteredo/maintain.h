@@ -42,10 +42,6 @@ typedef struct teredo_state
 	bool up; 
 } teredo_state;
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 /**
  * Teredo client maintenance procedure internal state.
  */
@@ -97,9 +93,5 @@ void teredo_maintenance_stop (teredo_maintenance *m);
  */
 int teredo_maintenance_process (teredo_maintenance *restrict m,
                                 const teredo_packet *restrict packet);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif

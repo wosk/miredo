@@ -26,10 +26,6 @@
 
 typedef struct teredo_server teredo_server;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 int teredo_server_check (char *errmsg, size_t len);
 
 /**
@@ -107,9 +103,4 @@ void teredo_server_stop (teredo_server *s);
  */
 void teredo_server_destroy (teredo_server *s);
 
-#ifdef __cplusplus
-}
-# endif
-
 #endif /* ifndef MIREDO_SERVER_H */
-

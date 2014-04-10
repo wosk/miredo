@@ -46,10 +46,6 @@ typedef struct teredo_peer
 
 typedef void (*teredo_dequeue_cb) (void *, const void *, size_t);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void teredo_enqueue_in (teredo_peer *restrict peer, const void *restrict data,
                         size_t len, uint32_t ip, uint16_t port);
 
@@ -58,10 +54,6 @@ void teredo_enqueue_out (teredo_peer *restrict peer,
 teredo_queue *teredo_peer_queue_yield (teredo_peer *peer);
 void teredo_queue_emit (teredo_queue *q, int fd, uint32_t ipv4, uint16_t port,
                         teredo_dequeue_cb cb, void *r);
-
-#ifdef __cplusplus
-}
-#endif
 
 static inline void SetMapping (teredo_peer *peer, uint32_t ip, uint16_t port)
 {
@@ -90,10 +82,6 @@ bool IsValid (const teredo_peer *peer, teredo_clock_t now)
 typedef struct teredo_peerlist teredo_peerlist;
 
 struct in6_addr;
-
-# ifdef __cplusplus
-extern "C" {
-# endif
 
 /**
  * Creates an empty peer list.
@@ -148,10 +136,5 @@ teredo_peer *teredo_list_lookup (teredo_peerlist *restrict list,
  * @param list peers list
  */
 void teredo_list_release (teredo_peerlist *list);
-
-# ifdef __cplusplus
-}
-# endif
-
 
 #endif /* ifndef LIBTEREDO_PEERLIST_H */

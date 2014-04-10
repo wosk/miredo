@@ -24,10 +24,6 @@
 
 struct in6_addr;
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 #define LIBTEREDO_NONCE_LEN 8
 #define LIBTEREDO_HMAC_LEN 22
 
@@ -43,7 +39,4 @@ void teredo_get_nonce (uint32_t timestamp, uint32_t ipv4, uint16_t port,
                        uint8_t *restrict nonce);
 uint16_t teredo_get_flbits (uint32_t timestamp);
 
-# ifdef __cplusplus
-}
-# endif
 #endif
