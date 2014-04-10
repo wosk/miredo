@@ -211,19 +211,10 @@ init_security (const char *username)
 		return -1;
 
 	/*
-	 * We close all file handles, except 0, 1 and 2.
-	 * This ensures that select() fd_set won't overflow.
-	 *
-	 * Those last 3 handles will be opened as /dev/null
-	 * by later daemon().
-	 */
-	closefrom (3);
-
-	/*
 	 * Make sure 0, 1 and 2 are open.
 	 */
 	val = dup (2);
-	if (val != 3)
+	if (val < 3)
 		return -1;
 	close (val);
 

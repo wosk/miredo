@@ -24,9 +24,7 @@ libcompat_la_SOURCES = fixups.h dummy.c
 libcompat_la_LIBADD = $(LTLIBOBJS)
 libcompat_la_LDFLAGS = -no-undefined
 
-check_PROGRAMS = test-strlcpy test-closefrom
+check_PROGRAMS = test-strlcpy
 TESTS = $(check_PROGRAMS)
 test_strlcpy_SOURCES = test-strlcpy.c
 test_strlcpy_LDADD = libcompat.la
-test_closefrom_SOURCES = test-closefrom.c
-test_closefrom_LDADD = libcompat.la

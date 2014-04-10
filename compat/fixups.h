@@ -39,11 +39,6 @@
 EXTERN int clearenv (void);
 #endif
 
-/* Non standard but useful OpenBSDism */
-#ifndef HAVE_CLOSEFROM
-EXTERN int closefrom (int lowfd);
-#endif
-
 /* Another useful BSDism */
 #ifndef HAVE_STRLCPY
 # include <stddef.h>
