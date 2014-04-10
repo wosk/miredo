@@ -257,8 +257,6 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	/* Start the discovery procedure thread */
 
 	memcpy (&d->src, src, sizeof d->src);
-	setsockopt (fd, IPPROTO_IP, IP_MULTICAST_LOOP, &(int){0}, sizeof (int));
-
 	d->mcast_fd = fd;
 	if (pthread_create (&d->send, NULL, teredo_mcast_thread, d))
 	{

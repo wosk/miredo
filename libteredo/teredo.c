@@ -110,6 +110,7 @@ int teredo_socket (uint32_t bind_ip, uint16_t port)
 	 * Teredo multicast packets always have a TTL of 1.
 	 */
 	setsockopt (fd, SOL_IP, IP_MULTICAST_TTL, &(int){ 1 }, sizeof (int));
+	setsockopt (fd, SOL_IP, IP_MULTICAST_LOOP, &(int){ 0 }, sizeof (int));
 	return fd;
 }
 
