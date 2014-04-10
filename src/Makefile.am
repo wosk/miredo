@@ -39,9 +39,11 @@ TESTS =
 
 #BUILT_SOURCES = $(srcdir)/svnversion.stamp
 
-libmiredo_la_SOURCES = main.c miredo.c miredo.h \
-			conf.c conf.h binreloc.c binreloc.h
-libmiredo_la_LIBADD = $(LTLIBINTL) $(LIBCAP) $(BINRELOC_LIBS) \
+libmiredo_la_SOURCES = \
+	miredo.c miredo.h \
+	conf.c conf.h \
+	main.c
+libmiredo_la_LIBADD = $(LTLIBINTL) $(LIBCAP) \
 			../compat/libcompat.la
 libmiredo_la_LDFLAGS = -no-undefined -static
 #libmiredo_la_LDFLAGS = -no-undefined -release @VERSION@

@@ -25,7 +25,6 @@
 #endif
 
 #include <gettext.h>
-#include "binreloc.h"
 
 #include <stdio.h>
 #include <stdlib.h> /* strtoul(), clearenv() */
@@ -309,17 +308,6 @@ init_security (const char *username)
 }
 
 
-static void init_locale (void)
-{
-	(void)br_init (NULL);
-	(void)setlocale (LC_ALL, "");
-	char *path = br_find_locale_dir (LOCALEDIR);
-	(void)bindtextdomain (PACKAGE, path);
-	free (path);
-	(void)textdomain (PACKAGE);
-}
-
-
 int miredo_main (int argc, char *argv[])
 {
 	const char *username = NULL, *conffile = NULL, *servername = NULL,
@@ -344,7 +332,9 @@ int miredo_main (int argc, char *argv[])
 		{ NULL,         no_argument,       NULL, '\0'}
 	};
 
-	init_locale ();
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
 #define ONETIME_SETTING( setting ) \
 	if (setting != NULL) \
@@ -405,20 +395,15 @@ int miredo_main (int argc, char *argv[])
 #endif
 
 	size_t str_len = 0;
-	char *path = NULL;
 	if (conffile == NULL)
-	{
-		path = br_find_etc_dir (SYSCONFDIR);
-		str_len = strlen (path) + strlen (miredo_name)
-		                        + sizeof ("/miredo/.conf");
-	}
+		str_len = sizeof (SYSCONFDIR"/miredo/.conf")
+				+ strlen (miredo_name);
 
 	char conffile_buf[str_len];
 	if (conffile == NULL)
 	{
-		snprintf (conffile_buf, str_len, "%s/miredo/%s.conf", path,
+		snprintf (conffile_buf, str_len, SYSCONFDIR"/miredo/%s.conf",
 		          miredo_name);
-		free (path);
 		conffile = conffile_buf;
 	}
 

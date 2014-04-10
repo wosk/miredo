@@ -25,7 +25,6 @@
 
 #include <gettext.h>
 #include <locale.h>
-#include "binreloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -162,12 +161,8 @@ static int usage (const char *path)
 
 int main(int argc, char *argv[])
 {
-	(void)br_init (NULL);
-	(void)setlocale (LC_ALL, "");
-	char *path = br_find_locale_dir (LOCALEDIR);
-	(void)bindtextdomain (PACKAGE_NAME, path);
-	free (path);
-	path = NULL;
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE_NAME, LOCALEDIR);
 
 	static const struct option opts[] =
 	{
@@ -215,10 +210,5 @@ int main(int argc, char *argv[])
 			filename = conffile;
 	}
 
-	int res = miredo_checkconffile (filename);
-
-	if (path != NULL)
-		free (path);
-
-	return res;
+	return miredo_checkconffile (filename);
 }
