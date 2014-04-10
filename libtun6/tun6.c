@@ -156,14 +156,21 @@ tun6 *tun6_create (const char *req_name)
 		return NULL;
 	memset (t, 0, sizeof (*t));
 
-	int reqfd = t->reqfd = socket (AF_INET6, SOCK_DGRAM, 0);
-	if (reqfd == -1)
+	int reqfd;
+#ifdef SOCK_CLOEXEC
+	reqfd = socket (AF_INET6, SOCK_DGRAM|SOCK_CLOEXEC, 0);
+	if (reqfd == -1 && errno == EINVAL)
+#endif
 	{
-		free (t);
-		return NULL;
+		reqfd = socket (AF_INET6, SOCK_DGRAM, 0);
+		if (reqfd == -1)
+		{
+			free (t);
+			return NULL;
+		}
+		fcntl (reqfd, F_SETFD, FD_CLOEXEC);
 	}
-
-	fcntl (reqfd, F_SETFD, FD_CLOEXEC);
+	t->reqfd = reqfd;
 
 #if defined (USE_LINUX)
 	/*
