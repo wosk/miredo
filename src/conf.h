@@ -26,10 +26,6 @@
 typedef void (*miredo_conf_logger) (void *, bool, const char *, va_list);
 struct in6_addr;
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 miredo_conf *miredo_conf_create (miredo_conf_logger logger, void *opaque);
 void miredo_conf_destroy (miredo_conf *conf);
 
@@ -54,9 +50,5 @@ bool miredo_conf_parse_teredo_prefix (miredo_conf *conf, const char *name,
 
 bool miredo_conf_parse_syslog_facility (miredo_conf *conf, const char *name,
                                         int *facility);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif
