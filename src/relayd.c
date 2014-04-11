@@ -89,11 +89,8 @@ typedef struct miredo_tunnel
 
 static int icmp6_fd = -1;
 
-static int miredo_init (bool client)
+static int miredo_init (void)
 {
-	if (teredo_startup (client))
-		return -1;
-
 	assert (icmp6_fd == -1);
 
 	icmp6_fd = socket (AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
@@ -112,11 +109,10 @@ static int miredo_init (bool client)
 }
 
 
-static void miredo_deinit (bool client)
+static void miredo_deinit (void)
 {
 	assert (icmp6_fd != -1);
 	close (icmp6_fd);
-	teredo_cleanup (client);
 }
 
 
@@ -638,7 +634,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 		return -1;
 	}
 
-	if (miredo_init ((mode & TEREDO_CLIENT) != 0))
+	if (miredo_init ())
 		syslog (LOG_ALERT, _("Miredo setup failure: %s"),
 		        _("libteredo cannot be initialized"));
 	else
@@ -670,7 +666,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 				syslog (LOG_ALERT, _("Miredo setup failure: %s"),
 				        _("libteredo cannot be initialized"));
 		}
-		miredo_deinit ((mode & TEREDO_CLIENT) != 0);
+		miredo_deinit ();
 	}
 
 	if (mode & TEREDO_CLIENT)
