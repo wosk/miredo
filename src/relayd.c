@@ -64,8 +64,6 @@
 #include "miredo.h"
 #include "conf.h"
 
-static void miredo_setup_nonblock_fd (int fd);
-
 typedef struct miredo_tunnel
 {
 	tun6 *tunnel;
@@ -77,20 +75,33 @@ static int icmp6_fd = -1;
 
 static int miredo_init (void)
 {
-	assert (icmp6_fd == -1);
+	int fd;
 
-	icmp6_fd = socket (AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
-	if (icmp6_fd == -1)
+	assert (icmp6_fd == -1);
+#ifdef SOCK_CLOEXEC
+	fd = socket (AF_INET6, SOCK_RAW|SOCK_CLOEXEC, IPPROTO_ICMPV6);
+	if (fd == -1 && errno == EINVAL)
+	{
+#endif
+		fd = socket (AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+		if (fd != -1)
+			fcntl (fd, F_SETFD, FD_CLOEXEC);
+	}
+	if (fd == -1)
 		return -1;
 
-	miredo_setup_nonblock_fd (icmp6_fd);
+	int flags = fcntl (fd, F_GETFL);
+	if (flags == -1)
+		flags = 0;
+	fcntl (fd, F_SETFL, O_NONBLOCK | flags);
 
-	setsockopt (icmp6_fd, SOL_IPV6, IPV6_CHECKSUM, &(int){2}, sizeof (int));
+	setsockopt (fd, SOL_IPV6, IPV6_CHECKSUM, &(int){2}, sizeof (int));
 
 	/* We don't use the socket for receive -> block all */
 	struct icmp6_filter filt;
 	ICMP6_FILTER_SETBLOCKALL (&filt);
-	setsockopt (icmp6_fd, SOL_ICMPV6, ICMP6_FILTER, &filt, sizeof (filt));
+	setsockopt (fd, SOL_ICMPV6, ICMP6_FILTER, &filt, sizeof (filt));
+	icmp6_fd = fd;
 	return 0;
 }
 
@@ -662,16 +673,6 @@ relay_run (miredo_conf *conf, const char *server_name)
 		destroy_static_tunnel (tunnel);
 
 	return retval;
-}
-
-
-static void miredo_setup_nonblock_fd (int fd)
-{
-	int flags = fcntl (fd, F_GETFL);
-	if (flags == -1)
-		flags = 0;
-	(void) fcntl (fd, F_SETFL, O_NONBLOCK | flags);
-	fcntl (fd, F_SETFD, FD_CLOEXEC);
 }
 
 
