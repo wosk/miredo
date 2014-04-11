@@ -223,8 +223,7 @@ int (*miredo_run) (miredo_conf *conf, const char *server);
 
 const char *miredo_name;
 
-# ifdef HAVE_LIBCAP
+#ifdef HAVE_LIBCAP
 const cap_value_t *miredo_capv;
 int miredo_capc;
-# endif
-
+#endif
