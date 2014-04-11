@@ -37,6 +37,7 @@
 #include <arpa/inet.h> /* inet_ntop() */
 #include <net/if.h> /* if_indextoname() */
 #include <signal.h> /* sigemptyset() */
+#include <spawn.h>
 #include <pthread.h> /* pthread_sigmask() */
 #include <netinet/in.h> /* needed by teredo.h */
 #ifndef IFNAMESIZE
@@ -62,27 +63,35 @@ static const char script_path[] = SYSCONFDIR"/miredo/client-hook";
  */
 static int run_script (void)
 {
-	pid_t pid = fork ();
+	pid_t pid;
+	char *argv[] = { (char *)script_path, NULL };
+	posix_spawn_file_actions_t actions;
+	posix_spawnattr_t attr;
 
-	switch (pid)
+	posix_spawn_file_actions_init (&actions);
+	posix_spawn_file_actions_adddup2 (&actions, 2, STDIN_FILENO);
+	posix_spawn_file_actions_adddup2 (&actions, 2, STDOUT_FILENO);
+
+	posix_spawnattr_init (&attr);
 	{
-		case -1:
-			return -1;
+		sigset_t set;
 
-		case 0:
-		{
-			sigset_t emptyset;
-			sigemptyset (&emptyset);
-			pthread_sigmask (SIG_SETMASK, &emptyset, NULL);
-
-			if (dup2 (2, 0) == 0 && dup2 (2, 1) == 1)
-				execl (script_path, script_path, (char *)NULL);
-
-			syslog (LOG_ERR, "Could not execute %s: %m",
-			        script_path);
-			exit (1);
-		}
+		sigemptyset (&set);
+		posix_spawnattr_setsigmask (&attr, &set);
 	}
+	posix_spawnattr_setflags (&attr, POSIX_SPAWN_SETSIGMASK);
+
+	if (posix_spawn (&pid, script_path, &actions, &attr, argv, environ))
+	{
+		syslog (LOG_ERR, "Could not execute %s: %m", script_path);
+		pid = -1;
+	}
+
+	posix_spawnattr_destroy (&attr);
+	posix_spawn_file_actions_destroy (&actions);
+
+	if (pid == -1)
+		return -1;
 
 	int res;
 	while (waitpid (pid, &res, 0) == -1);
