@@ -281,6 +281,60 @@ init_security (const char *username)
 	return 0;
 }
 
+static int start_daemon (const char *pidfile)
+{
+	int fds[2];
+
+	if (pipe (fds))
+		exit (1);
+
+	pid_t pid = fork ();
+	switch (pid)
+	{
+		case -1:
+			fprintf (stderr, _("Error (%s): %s\n"), "fork", strerror (errno));
+			exit (1);
+
+		case 0:
+			close (fds[0]);
+			setsid ();
+			break;
+
+		default:
+		{
+			unsigned char val;
+
+			close (fds[1]);
+			if (read (fds[0], &val, 1) != 1)
+				val = 1;
+			exit (val);
+		}
+	}
+
+	/* Opens PID file */
+	int fd = create_pidfile (pidfile);
+	if (fd == -1)
+	{
+		fprintf (stderr, _("Cannot create PID file %s:\n %s\n"),
+		         pidfile, strerror (errno));
+		if ((errno == EAGAIN) || (errno == EACCES))
+			fprintf (stderr, "%s\n",
+			         _("Please make sure another instance of the program is "
+				   "not already running."));
+		exit (1);
+	}
+
+	/* Detaches */
+	if (freopen ("/dev/null", "r", stdin) == NULL
+	 || freopen ("/dev/null", "w", stdout) == NULL
+	 || freopen ("/dev/null", "w", stderr) == NULL
+	 || write (fds[1], &(unsigned char){ 0 }, 1) != 1)
+		exit (1);
+
+	close (fds[1]);
+	return fd;
+}
+
 
 int miredo_main (int argc, char *argv[])
 {
@@ -383,19 +437,6 @@ int miredo_main (int argc, char *argv[])
 		return 1;
 	}
 
-	if (pidfile == NULL)
-		str_len = sizeof (LOCALSTATEDIR"/run/" ".pid") + strlen (miredo_name);
-	else
-		str_len = 0;
-
-	char pidfile_buf[str_len];
-	if (pidfile == NULL)
-	{
-		snprintf (pidfile_buf, str_len, LOCALSTATEDIR"/run/%s.pid",
-		          miredo_name);
-		pidfile = pidfile_buf;
-	}
-
 	if (init_security (username))
 		return 1;
 	else
@@ -408,73 +449,26 @@ int miredo_main (int argc, char *argv[])
 			return 1;
 		}
 	        close (fd);
-        }
+	}
 
-	int pipes[2];
-	if (pipe (pipes))
-		pipes[0] = pipes[1] = -1;
+	char pidfile_buf[(pidfile != NULL)
+		? 0 : sizeof (LOCALSTATEDIR"/run/" ".pid") + strlen (miredo_name)];
+	int fd = -1;
 
 	if (!flags.foreground)
 	{
-		pid_t pid = fork ();
-
-		switch (pid)
-		{
-			case -1:
-				fprintf (stderr, _("Error (%s): %s\n"), "fork", strerror (errno));
-				return 1;
-
-			case 0:
-				break;
-
-			default:
-			{
-				close (pipes[1]);
-				if (read (pipes[0], &c, sizeof (c)) != sizeof (c))
-					c = 1;
-
-				close (pipes[0]);
-				return c;
-			}
-		}
-	}
-	close (pipes[0]);
-
-	/* Opens pidfile */
-	int fd = create_pidfile (pidfile);
-	if (fd == -1)
-	{
-		fprintf (stderr, _("Cannot create PID file %s:\n %s\n"),
-		         pidfile, strerror (errno));
-		if ((errno == EAGAIN) || (errno == EACCES))
-			fprintf (stderr, "%s\n",
-			         _("Please make sure another instance of the program is "
-				   "not already running."));
-		exit (1);
+		sprintf (pidfile_buf, LOCALSTATEDIR"/run/%s.pid", miredo_name);
+		pidfile = pidfile_buf;
+		fd = start_daemon (pidfile);
 	}
 
-	/* Detaches */
-	if (!flags.foreground)
-	{
-		c = 0;
-
-		setsid ();
-		if (freopen ("/dev/null", "r", stdin) == NULL
-		 || freopen ("/dev/null", "w", stdout) == NULL
-		 || freopen ("/dev/null", "w", stderr) == NULL
-		 || (write (pipes[1], &c, sizeof (c)) <= 0))
-			exit (1);
-	}
-	close (pipes[1]);
-
-	/*
-	 * Run
-	 */
 	c = miredo (conffile, servername, fd);
 
-	(void)unlink (pidfile);
-	close (fd);
+	if (fd != -1)
+	{
+		unlink (pidfile);
+		close (fd);
+	}
 
 	exit (c ? 1 : 0);
 }
-

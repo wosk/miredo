@@ -142,7 +142,8 @@ miredo (const char *confpath, const char *server_name, int pidfd)
 				continue;
 
 			case 0:
-				close (pidfd);
+				if (pidfd != -1)
+					close (pidfd);
 				retval = miredo_run (cnf, server_name);
 				miredo_conf_destroy (cnf);
 				closelog ();
