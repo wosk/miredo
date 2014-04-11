@@ -189,7 +189,7 @@ tun6 *tun6_create (const char *req_name)
 		return NULL;
 	}
 
-	int fd = open (tundev, O_RDWR);
+	int fd = open (tundev, O_RDWR|O_CLOEXEC);
 	if (fd == -1)
 	{
 		syslog (LOG_ERR, _("Tunneling driver error (%s): %m"), tundev);
@@ -220,7 +220,7 @@ tun6 *tun6_create (const char *req_name)
 	 * BSD tunnel driver initialization
 	 * (see BSD src/sys/net/if_tun.{c,h})
 	 */
-	int fd = open ("/dev/tun", O_RDWR);
+	int fd = open ("/dev/tun", O_RDWR|O_CLOEXEC);
 	if ((fd == -1) && (errno == ENOENT))
 	{
 		/*
@@ -233,7 +233,7 @@ tun6 *tun6_create (const char *req_name)
 			char tundev[5 + IFNAMSIZ];
 			snprintf (tundev, sizeof (tundev), "/dev/tun%u", i);
 
-			fd = open (tundev, O_RDWR);
+			fd = open (tundev, O_RDWR|O_CLOEXEC);
 			if ((fd == -1) && (errno == ENOENT))
 				// If /dev/tun<i> does not exist,
 				// /dev/tun<i+1> won't exist either
@@ -339,10 +339,6 @@ tun6 *tun6_create (const char *req_name)
 # error No tunneling driver implemented on your platform!
 #endif /* HAVE_os */
 
-	fcntl (fd, F_SETFD, FD_CLOEXEC);
-	/*int val = fcntl (fd, F_GETFL);
-	fcntl (fd, F_SETFL, ((val != -1) ? val : 0) | O_NONBLOCK);*/
-
 	t->id = id;
 	t->fd = fd;
 	return t;
@@ -424,7 +420,7 @@ int tun6_getId (const tun6 *t)
 static int
 proc_write_zero (const char *path)
 {
-	int fd = open (path, O_WRONLY);
+	int fd = open (path, O_WRONLY|O_CLOEXEC);
 	if (fd == -1)
 		return -1;
 
