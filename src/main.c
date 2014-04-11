@@ -156,7 +156,7 @@ create_pidfile (const char *path)
 {
 	int fd;
 
-	fd = open (path, O_WRONLY|O_CREAT|O_NOFOLLOW, 0644);
+	fd = open (path, O_WRONLY|O_CREAT|O_NOFOLLOW|O_CLOEXEC, 0644);
 	if (fd != -1)
 	{
 		char buf[20]; // enough for > 2^64
@@ -165,7 +165,6 @@ create_pidfile (const char *path)
 		snprintf (buf, sizeof (buf), "%d", (int)getpid ());
 		buf[sizeof (buf) - 1] = '\0';
 
-		fcntl (fd, F_SETFD, fcntl (fd, F_GETFD) | FD_CLOEXEC);
 		errno = 0;
 
 		/* Locks the PID file */
