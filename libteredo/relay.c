@@ -1064,6 +1064,7 @@ teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port)
 		{
 			(void)pthread_rwlock_init (&tunnel->state_lock, NULL);
 			(void)pthread_mutex_init (&tunnel->ratelimit.lock, NULL);
+			teredo_clock_init ();
 			return tunnel;
 		}
 		teredo_close (tunnel->fd);
@@ -1096,6 +1097,7 @@ void teredo_destroy (teredo_tunnel *t)
 	if (t->recv != NULL)
 		teredo_thread_stop (t->recv);
 
+	teredo_clock_deinit ();
 	teredo_list_destroy (t->list);
 	pthread_rwlock_destroy (&t->state_lock);
 	pthread_mutex_destroy (&t->ratelimit.lock);
