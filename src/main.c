@@ -270,8 +270,8 @@ init_security (const char *username)
 		CAP_KILL, // required by the signal handler
 		CAP_SETUID
 	};
-	cap_set_flag (s, CAP_PERMITTED, 3, caps, CAP_SET);
-	cap_set_flag (s, CAP_EFFECTIVE, 3, caps, CAP_SET);
+	cap_set_flag (s, CAP_PERMITTED, 2, caps, CAP_SET);
+	cap_set_flag (s, CAP_EFFECTIVE, 2, caps, CAP_SET);
 
 	cap_set_flag (s, CAP_PERMITTED, miredo_capc,
 	              (cap_value_t *)miredo_capv, CAP_SET);
