@@ -80,7 +80,7 @@ int teredo_init_HMAC (void)
 	if (hmac_pid != htons ((uint16_t)getpid ()))
 	{
 		/* Get a non-predictable random key from the kernel PRNG */
-		int fd = open (randfile, O_RDONLY);
+		int fd = open (randfile, O_RDONLY|O_CLOEXEC);
 		if (fd == -1)
 			goto error;
 
