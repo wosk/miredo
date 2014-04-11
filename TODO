@@ -40,21 +40,6 @@ Extension:
 (?) customizable IPv4 ACLs, e.g. allow custom internal Teredo
     with private IPv4 addresses
 
-Portability:
--------------
-(H) big-endianess compatibility and regression tests
-(H) byte alignement tests on problematic platforms (not i386)
-(H) Solaris: libtun6 support
-(H) Solaris: tests & fixes
-(H) NetBSD 4 kernel tunnel routes fix
-(H) DragonFly kernel tunnel routes fix
-(H) OpenBSD kernel support correctness check
-
-Documentation & support:
--------------------------
-( ) custom INSTALL file
-( ) RPM packaging
-
 Re-usability:
 --------------
 ( ) avoid syslog() in libtun6
