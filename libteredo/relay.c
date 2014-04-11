@@ -1024,9 +1024,15 @@ static void teredo_dummy_state_down_cb (void *o)
 
 teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port)
 {
+	if (teredo_init_HMAC ())
+		return NULL;
+
 	teredo_tunnel *tunnel = malloc (sizeof (*tunnel));
 	if (tunnel == NULL)
+	{
+		teredo_deinit_HMAC ();
 		return NULL;
+	}
 
 	memset (tunnel, 0, sizeof (*tunnel));
 	tunnel->state.addr.teredo.prefix = htonl (TEREDO_PREFIX);
@@ -1062,6 +1068,7 @@ teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port)
 	}
 
 	free (tunnel);
+	teredo_deinit_HMAC ();
 	return NULL;
 }
 
@@ -1092,6 +1099,7 @@ void teredo_destroy (teredo_tunnel *t)
 	pthread_mutex_destroy (&t->ratelimit.lock);
 	teredo_close (t->fd);
 	free (t);
+	teredo_deinit_HMAC ();
 }
 
 
