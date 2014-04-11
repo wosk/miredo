@@ -253,7 +253,7 @@ teredo_parse_ra (const teredo_packet *restrict packet,
 	if (newaddr->teredo.prefix == htonl (TEREDO_PREFIX_OBSOLETE))
 		newaddr->teredo.prefix = htonl (TEREDO_PREFIX);
 
-	if (!is_valid_teredo_prefix (newaddr->teredo.prefix))
+	if (newaddr->teredo.prefix != htonl (TEREDO_PREFIX))
 		return -1;
 
 	// only accept the cone flag:

@@ -115,21 +115,6 @@ void teredo_destroy (teredo_tunnel *t);
 int teredo_run_async (teredo_tunnel *t);
 
 /**
- * Overrides the Teredo prefix of a Teredo relay.
- * Currently ignored for Teredo client (but might later restrict accepted
- * Teredo prefix to the specified one).
- *
- * Thread-safety: This function is thread-safe.
- *
- * @param t Teredo tunnel instance
- * @param prefix Teredo 32-bits (network byte order) prefix.
- *
- * @return 0 on success, -1 if the prefix is invalid (in which case the
- * teredo_tunnel instance is not modified).
- */
-int teredo_set_prefix (teredo_tunnel *t, uint32_t prefix);
-
-/**
  * Defines the cone flag of the Teredo tunnel.
  * This only works for Teredo relays.
  *

@@ -6,7 +6,6 @@ teredo_set_discovery_params
 teredo_set_relay_mode
 teredo_set_cone_flag
 teredo_set_icmpv6_callback
-teredo_set_prefix
 teredo_set_privdata
 teredo_set_recv_callback
 teredo_set_state_cb

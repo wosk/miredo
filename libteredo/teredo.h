@@ -100,14 +100,6 @@ in6_matches_teredo_client (const struct in6_addr *ip6,
 }
 
 /*
- * Returns true if prefix can be used as a Teredo prefix.
- * As per RFC3513, anything could be used for Teredo (unicast)
- * except the multicast range (ff00::/8).
- */
-#define is_valid_teredo_prefix( prefix ) \
-	(((prefix) & 0xff000000) != 0xff000000)
-
-/*
  * Teredo headers
  */
 enum

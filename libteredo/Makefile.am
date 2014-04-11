@@ -61,7 +61,8 @@ libteredo_la_LDFLAGS = -no-undefined -export-symbols $(srcdir)/libteredo.sym \
 # -- backward compatibility break --
 # 5) added teredo_packet.dest_ipv4, removed teredo_set_cone_ignore() (1.1.7)
 # -- backward compatibility break --
-# 6) removed teredo_run(), teredo_startup(), teredo_cleanup() (1.3.0)
+# 6) teredo_run(), teredo_set_prefix(), teredo_startup(), teredo_cleanup()
+#    removed (1.3.0)
 
 # libteredo-server.la
 libteredo_server_la_SOURCES = server.c server.h

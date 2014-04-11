@@ -373,7 +373,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 	}
 #endif
 
-	if (dst->teredo.prefix != s.addr.teredo.prefix)
+	if (dst->teredo.prefix != htonl (TEREDO_PREFIX))
 	{
 		/* Non-Teredo destination */
 #ifdef MIREDO_TEREDO_CLIENT
@@ -382,7 +382,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 			const union teredo_addr *src =
 				(const union teredo_addr *)&packet->ip6_src;
 
-			if (src->teredo.prefix != s.addr.teredo.prefix)
+			if (src->teredo.prefix != htonl (TEREDO_PREFIX))
 			{
 				// Teredo servers and relays would reject the packet
 				// if it does not have a Teredo source.
@@ -406,7 +406,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 	else
 	{
 		/* Teredo destination */
-		assert (dst->teredo.prefix == s.addr.teredo.prefix);
+		assert (dst->teredo.prefix == htonl (TEREDO_PREFIX));
 		/*
 		 * Ignores Teredo clients with incorrect server IPv4.
 		 * This check is only specified for client case 4 & 5.
@@ -465,7 +465,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 
 #ifdef MIREDO_TEREDO_CLIENT
 	/* Untrusted non-Teredo node */
-	if (dst->teredo.prefix != s.addr.teredo.prefix)
+	if (dst->teredo.prefix != htonl (TEREDO_PREFIX))
 	{
 		int res;
 
@@ -590,10 +590,10 @@ teredo_islocal (teredo_tunnel *restrict tunnel,
 	if (!tunnel->disc_params || !tunnel->discovery)
 		return false; // local discovery disabled
 
-	union teredo_addr our = tunnel->state.addr;
-	if (IN6_TEREDO_PREFIX (&packet->ip6->ip6_src) != our.teredo.prefix)
+	if (IN6_TEREDO_PREFIX (&packet->ip6->ip6_src) != htonl (TEREDO_PREFIX))
 		return false; // not a teredo address
 
+	union teredo_addr our = tunnel->state.addr;
 	uint32_t client_ip = IN6_TEREDO_IPV4 (&packet->ip6->ip6_src);
 	if ((client_ip ^ ~our.teredo.client_ip) & tunnel->disc_params->netmask)
 		return false; // non-matching mapped IPv4
@@ -659,8 +659,8 @@ teredo_recv_process (teredo_tunnel *restrict tunnel,
 	}
 
 	pthread_rwlock_rdlock (&tunnel->state_lock);
-	teredo_state s = tunnel->state;
 #ifdef MIREDO_TEREDO_CLIENT
+	teredo_state s = tunnel->state;
 	bool islocal = teredo_islocal (tunnel, packet);
 #endif
 	/*
@@ -694,7 +694,7 @@ teredo_recv_process (teredo_tunnel *restrict tunnel,
 			uint16_t port = packet->orig_port;
 
 			if ((ipv4 == 0) && IsBubble (ip6)
-			 && (IN6_TEREDO_PREFIX (&ip6->ip6_src) == s.addr.teredo.prefix))
+			 && (IN6_TEREDO_PREFIX (&ip6->ip6_src) == htonl (TEREDO_PREFIX)))
 			{
 				/*
 				 * Some servers do not insert an origin indication.
@@ -747,9 +747,9 @@ teredo_recv_process (teredo_tunnel *restrict tunnel,
 	else
 #endif /* MIREDO_TEREDO_CLIENT */
 	/* Relays only accept packets from Teredo clients */
-	if (IN6_TEREDO_PREFIX (&ip6->ip6_src) != s.addr.teredo.prefix)
+	if (IN6_TEREDO_PREFIX (&ip6->ip6_src) != htonl (TEREDO_PREFIX))
 	{
-		debug ("Source %s is not a teredo address.",
+		debug ("Source %s is not a Teredo address.",
 		       inet_ntop (AF_INET6, &ip6->ip6_src.s6_addr, b, sizeof b));
 		return;
 	}
@@ -873,7 +873,7 @@ teredo_recv_process (teredo_tunnel *restrict tunnel,
 	 * At this point, we have either a trusted mapping mismatch,
 	 * an unlisted peer, or an un-trusted client peer.
 	 */
-	if (IN6_TEREDO_PREFIX (&ip6->ip6_src) == s.addr.teredo.prefix)
+	if (IN6_TEREDO_PREFIX (&ip6->ip6_src) == htonl (TEREDO_PREFIX))
 	{
 		// Client case 3 (unknown or untrusted matching Teredo client):
 		if (IN6_MATCHES_TEREDO_CLIENT (&ip6->ip6_src, packet->source_ipv4,
@@ -927,7 +927,7 @@ teredo_recv_process (teredo_tunnel *restrict tunnel,
 #ifdef MIREDO_TEREDO_CLIENT
 	else
 	{
-		assert (IN6_TEREDO_PREFIX (&ip6->ip6_src) != s.addr.teredo.prefix);
+		assert (IN6_TEREDO_PREFIX (&ip6->ip6_src) != htonl (TEREDO_PREFIX));
 		assert (IsClient (tunnel));
 
 		/*
@@ -1143,28 +1143,6 @@ int teredo_run_async (teredo_tunnel *t)
 		return -1;
 
 	return 0;
-}
-
-
-int teredo_set_prefix (teredo_tunnel *t, uint32_t prefix)
-{
-	assert (t != NULL);
-	if (!is_valid_teredo_prefix (prefix))
-		return -1;
-
-	int retval = 0;
-
-	pthread_rwlock_wrlock (&t->state_lock);
-
-#ifdef MIREDO_TEREDO_CLIENT
-	if (t->maintenance != NULL)
-		retval = -1;
-	else
-#endif
-		t->state.addr.teredo.prefix = prefix;
-
-	pthread_rwlock_unlock (&t->state_lock);
-	return retval;
 }
 
 

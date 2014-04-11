@@ -54,10 +54,6 @@ int main (void)
 	val = teredo_set_relay_mode (tunnel);
 	assert (val == 0);
 
-	val = teredo_set_prefix (tunnel, htonl (0xff020000));
-	val = teredo_set_prefix (tunnel, htonl (TEREDO_PREFIX));
-	assert (val == 0);
-
 	val = teredo_set_cone_flag (tunnel, false);
 	assert (val == 0);
 	val = teredo_set_cone_flag (tunnel, true);
