@@ -1024,6 +1024,8 @@ static void teredo_dummy_state_down_cb (void *o)
 
 teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port)
 {
+	bindtextdomain (PACKAGE_NAME, LOCALEDIR);
+
 	if (teredo_init_HMAC ())
 		return NULL;
 
