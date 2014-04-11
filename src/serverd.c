@@ -69,12 +69,8 @@ static int
 server_run (miredo_conf *conf, const char *server_name)
 {
 	teredo_server *server;
-	union teredo_addr prefix;
 	uint32_t server_ip = INADDR_ANY, server_ip2 = INADDR_ANY;
 	uint16_t mtu = 1280;
-
-	memset (&prefix, 0, sizeof (prefix));
-	prefix.teredo.prefix = htonl (TEREDO_PREFIX);
 
 	if (server_name != NULL)
 	{
@@ -113,9 +109,7 @@ server_run (miredo_conf *conf, const char *server_name)
 	if (server_ip2 == INADDR_ANY)
 		server_ip2 = htonl (ntohl (server_ip) + 1);
 
-	if (!miredo_conf_parse_teredo_prefix (conf, "Prefix",
-	                                      &prefix.teredo.prefix)
-	 || !miredo_conf_get_int16 (conf, "InterfaceMTU", &mtu, NULL))
+	if (!miredo_conf_get_int16 (conf, "InterfaceMTU", &mtu, NULL))
 	{
 		syslog (LOG_ALERT, _("Fatal configuration error"));
 		return -2;
@@ -131,8 +125,7 @@ server_run (miredo_conf *conf, const char *server_name)
 
 	if (server != NULL)
 	{
-		if ((teredo_server_set_prefix (server, prefix.teredo.prefix) == 0)
-		 && (teredo_server_set_MTU (server, mtu) == 0)
+		if ((teredo_server_set_MTU (server, mtu) == 0)
 		 && (teredo_server_start (server) == 0))
 		{
 			sigset_t dummyset, set;

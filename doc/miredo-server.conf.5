@@ -35,8 +35,7 @@ directives follows:
 .BI "ServerBindAddress " "server_ip"
 Specifies the primary IPv4 address of the Teredo server.
 miredo-server will bind to UDP/IPv4 port 3544 on this address and waits
-for packets from Teredo clients. It will advertise the Teredo prefix
-.RB "which is defined with the " "Prefix" " directive."
+for packets from Teredo clients. It will advertise the Teredo prefix.
 
 A Teredo server needs two subsequent IPv4 addresses. It will wait for
 UDP IPv4 packets on port 3544 on both addresses.
@@ -53,26 +52,10 @@ However, Miredo clients will need manual configuration (with the
 are believed not to support such setup.
 
 .TP
-.BI "Prefix " "teredo_prefix"
-.RB "This directive specifies the " "Teredo prefix" " which the Teredo"
-relay and/or server will advertise.
-.IR "teredo_prefix" " must be a valid IPv6 prefix."
-
-.RB "The default value is " "2001:0000::" "."
-A 32-bits prefix is required to use this option. Since you do not have
-such big an IPv6 prefix
-.B YOU WILL NOT USE THIS OPTION.
-Moreover, certain third party Teredo client implementations
-require the default prefix.
-
-.TP
 .BI "InterfaceMTU " "mtu"
 This directive overrides the value of the MTU that is advertised to
 Teredo clients. The default value is 1280 bytes and should not be
-changed if the default Teredo prefix is used.
-
-.B YOU MUST NOT USE THIS OPTION with the default prefix.
-This would break interoperability with most Teredo relays.
+changed unless a protocol update requires it.
 
 .TP
 .BI "SyslogFacility " "facility"

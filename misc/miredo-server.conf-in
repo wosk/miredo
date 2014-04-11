@@ -17,6 +17,5 @@ ServerBindAddress 192.0.2.221
 
 #SyslogFacility user
 
-# Think twice before modifying the settings above.
-#Prefix 2001:0::
+# Think twice before modifying the setting below.
 #InterfaceMTU 1280
