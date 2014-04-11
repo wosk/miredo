@@ -54,14 +54,8 @@
 static int
 server_diagnose (void)
 {
-	char buf[1024];
-	int check = teredo_server_check (buf, sizeof (buf));
-	if (check)
-	{
-		buf[sizeof (buf) - 1] = '\0';
-		fprintf (stderr, "%s\n", buf);
-	}
-	return check;
+
+	return 0;
 }
 
 

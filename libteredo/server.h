@@ -26,8 +26,6 @@
 
 typedef struct teredo_server teredo_server;
 
-int teredo_server_check (char *errmsg, size_t len);
-
 /**
  * Creates a Teredo server handler. You should then drop your
  * privileges and call teredo_server_start().

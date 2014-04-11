@@ -446,23 +446,6 @@ accept:
 }
 
 
-int teredo_server_check (char *errmsg, size_t len)
-{
-	int fd = socket (AF_INET6, SOCK_RAW, IPPROTO_RAW);
-
-	if (fd >= 0)
-	{
-		close (fd);
-		return 0;
-	}
-
-	/* FIXME: not thread-safe (OK but ugly) */
-	snprintf (errmsg, len, _("Raw IPv6 socket not working: %s"),
-	          strerror (errno));
-	return -1;
-}
-
-
 static LIBTEREDO_NORETURN void *thread_primary (void *data)
 {
 	for (;;)
