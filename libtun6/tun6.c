@@ -163,12 +163,13 @@ tun6 *tun6_create (const char *req_name)
 #endif
 	{
 		reqfd = socket (AF_INET6, SOCK_DGRAM, 0);
-		if (reqfd == -1)
-		{
-			free (t);
-			return NULL;
-		}
-		fcntl (reqfd, F_SETFD, FD_CLOEXEC);
+		if (reqfd != -1)
+			fcntl (reqfd, F_SETFD, FD_CLOEXEC);
+	}
+	if (reqfd == -1)
+	{
+		free (t);
+		return NULL;
 	}
 	t->reqfd = reqfd;
 
