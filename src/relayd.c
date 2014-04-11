@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <sys/wait.h> // wait()
 #include <signal.h> // sigemptyset()
+#include <spawn.h>
 #include <syslog.h>
 #include <pthread.h>
 
@@ -276,25 +277,27 @@ create_dynamic_tunnel (const char *ifname, int *pfd)
 		fcntl (fd[1], F_SETFD, FD_CLOEXEC);
 	}
 
+	static const char path[] = PKGLIBEXECDIR"/miredo-privproc";
+
 	char ifindex[2 * sizeof (unsigned) + 1];
 	snprintf (ifindex, sizeof (ifindex), "%X", tun6_getId (tunnel));
 
-	static const char path[] = PKGLIBEXECDIR"/miredo-privproc";
-	switch (fork ())
+	char *argv[] = { (char *)path, ifindex, NULL };
+	posix_spawn_file_actions_t actions;
+
+	posix_spawn_file_actions_init (&actions);
+	posix_spawn_file_actions_adddup2 (&actions, fd[0], STDIN_FILENO);
+	posix_spawn_file_actions_adddup2 (&actions, fd[0], STDOUT_FILENO);
+
+	pid_t pid;
+	if (posix_spawn (&pid, path, &actions, NULL, argv, environ))
 	{
-		case -1:
-			close (fd[0]);
-			close (fd[1]);
-			goto error;
-
-		case 0:
-			if (dup2 (fd[0], 0) == 0 && dup2 (fd[0], 1) == 1)
-				execl (path, path, ifindex, (char *)NULL);
-
-			syslog (LOG_ERR, _("Could not execute %s: %m"), path);
-			exit (1);
+		syslog (LOG_ERR, _("Could not execute %s: %m"), path);
+		posix_spawn_file_actions_destroy (&actions);
+		goto error;
 	}
-	close (fd[0]);
+
+	close(fd[0]);
 	*pfd = fd[1];
 	return tunnel;
 error:
