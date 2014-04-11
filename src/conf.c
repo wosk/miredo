@@ -432,64 +432,6 @@ bool miredo_conf_parse_IPv4 (miredo_conf *conf, const char *name,
 }
 
 
-bool miredo_conf_parse_IPv6 (miredo_conf *conf, const char *name,
-                             struct in6_addr *value)
-{
-	unsigned line;
-	char *val = miredo_conf_get (conf, name, &line);
-
-	if (val == NULL)
-		return true;
-
-	struct addrinfo help =
-	{
-		.ai_family = AF_INET6,
-		.ai_socktype = SOCK_DGRAM,
-		.ai_protocol = IPPROTO_UDP
-	}, *res;
-
-	int check = getaddrinfo (val, NULL, &help, &res);
-
-	if (check)
-	{
-		LogError (conf, _("Invalid hostname \"%s\" at line %u: %s"),
-		          val, line, gai_strerror (check));
-		free (val);
-		return false;
-	}
-
-	memcpy (value, &((const struct sockaddr_in6*)(res->ai_addr))->sin6_addr,
-	        sizeof (struct in6_addr));
-
-	freeaddrinfo (res);
-	free (val);
-	return true;
-}
-
-
-bool miredo_conf_parse_teredo_prefix (miredo_conf *conf, const char *name,
-                                      uint32_t *value)
-{
-	union teredo_addr addr;
-	memset (&addr, 0, sizeof (addr));
-	addr.teredo.prefix = *value;
-
-	if (miredo_conf_parse_IPv6 (conf, name, &addr.ip6))
-	{
-		if (!is_valid_teredo_prefix (addr.teredo.prefix))
-		{
-			LogError (conf, _("Invalid Teredo IPv6 prefix: %x::/32"),
-			          addr.teredo.prefix);
-			return false;
-		}
-
-		*value = addr.teredo.prefix;
-		return true;
-	}
-	return false;
-}
-
-
 static const struct miredo_conf_syslog_facility
 {
 	const char *str;

@@ -386,10 +386,10 @@ setup_client (teredo_tunnel *client, const char *server, const char *server2,
 # define setup_client( a, b, c, d )       (-1)
 #endif
 
+static const struct in6_addr teredo_prefix = { .s6_addr = { 0x20, 0x01, } };
 
 static tun6 *
 create_static_tunnel (const char *restrict ifname,
-                      const struct in6_addr *restrict prefix,
                       uint16_t mtu)
 {
 	tun6 *tunnel = tun6_create (ifname);
@@ -401,7 +401,7 @@ create_static_tunnel (const char *restrict ifname,
 
 	if (tun6_setMTU (tunnel, mtu) || tun6_bringUp (tunnel)
 	 || tun6_addAddress (tunnel, &teredo_restrict, 64)
-	 || tun6_addRoute (tunnel, prefix, 32, 0))
+	 || tun6_addRoute (tunnel, &teredo_prefix, 32, 0))
 	{
 		tun6_destroy (tunnel);
 		return NULL;
@@ -412,8 +412,7 @@ create_static_tunnel (const char *restrict ifname,
 
 #if 0 && !defined (MIREDO_DEFAULT_USERNAME)
 static void
-destroy_static_tunnel (tun6 *restrict tunnel,
-                       const struct in6_addr *restrict prefix)
+destroy_static_tunnel (tun6 *restrict tunnel)
 {
 	/*
 	 * Manual clean up of the tunnel device is only possible if we retain root
@@ -423,20 +422,19 @@ destroy_static_tunnel (tun6 *restrict tunnel,
 	 * Miredo; that's part of the standard job of a solid kernel process
 	 * killer.
 	 */
-	tun6_delRoute (tunnel, prefix, 32, 0);
+	tun6_delRoute (tunnel, &teredo_prefix, 32, 0);
 	tun6_delAddress (tunnel, &teredo_restrict, 64);
 	tun6_bringDown (tunnel);
 	tun6_destroy (tunnel);
 }
 #else
-# define destroy_static_tunnel( t, p ) tun6_destroy( t )
+# define destroy_static_tunnel( t ) tun6_destroy( t )
 #endif
 
 
 static int
-setup_relay (teredo_tunnel *relay, uint32_t prefix, bool cone)
+setup_relay (teredo_tunnel *relay, bool cone)
 {
-	teredo_set_prefix (relay, prefix);
 	teredo_set_cone_flag (relay, cone);
 	return teredo_set_relay_mode (relay);
 }
@@ -504,10 +502,6 @@ relay_run (miredo_conf *conf, const char *server_name)
 	/*
 	 * CONFIGURATION
 	 */
-	union teredo_addr prefix;
-	memset (&prefix, 0, sizeof (prefix));
-	prefix.teredo.prefix = htonl (TEREDO_PREFIX);
-
 	int mode = TEREDO_CLIENT;
 	if (!ParseRelayType (conf, "RelayType", &mode))
 	{
@@ -574,9 +568,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 		mtu = 1280;
 		cone = (mode == TEREDO_CONE);
 
-		if (!miredo_conf_parse_teredo_prefix (conf, "Prefix",
-		                                      &prefix.teredo.prefix)
-		 || !miredo_conf_get_int16 (conf, "InterfaceMTU", &mtu, NULL))
+		if (!miredo_conf_get_int16 (conf, "InterfaceMTU", &mtu, NULL))
 		{
 			syslog (LOG_ALERT, _("Fatal configuration error"));
 			return -2;
@@ -620,7 +612,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 	int privfd = -1;
 	tun6 *tunnel = (mode & TEREDO_CLIENT)
 		? create_dynamic_tunnel (ifname, &privfd)
-		: create_static_tunnel (ifname, &prefix.ip6, mtu);
+		: create_static_tunnel (ifname, mtu);
 
 	if (ifname != NULL)
 		free (ifname);
@@ -652,7 +644,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 				retval = (mode & TEREDO_CLIENT)
 					? setup_client (relay, server_name, server_name2,
 					                disc_params)
-					: setup_relay (relay, prefix.teredo.prefix, cone);
+					: setup_relay (relay, cone);
 	
 				/*
 				 * RUN
@@ -672,7 +664,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 	if (mode & TEREDO_CLIENT)
 		destroy_dynamic_tunnel (tunnel, privfd);
 	else
-		destroy_static_tunnel (tunnel, &prefix.ip6);
+		destroy_static_tunnel (tunnel);
 
 	return retval;
 }

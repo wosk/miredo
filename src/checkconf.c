@@ -109,9 +109,7 @@ static int miredo_checkconf (miredo_conf *conf)
 	}
 	else
 	{
-		uint32_t pref;
-		if (!miredo_conf_parse_teredo_prefix (conf, "Prefix", &pref)
-		 || !miredo_conf_get_int16 (conf, "InterfaceMTU", &u16, NULL))
+		if (!miredo_conf_get_int16 (conf, "InterfaceMTU", &u16, NULL))
 			res = -1;
 	}
 

@@ -30,6 +30,5 @@ InterfaceName	teredo
 ServerAddress teredo.remlab.net
 #ServerAddress2 teredo2.remlab.net
 
-## RELAY-SPECIFIC OPTIONS
-#Prefix 2001:0::
+## RELAY-SPECIFIC OPTION
 #InterfaceMTU 1280

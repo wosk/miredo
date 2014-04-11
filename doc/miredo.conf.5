@@ -166,22 +166,9 @@ any local client will be accepted, regardless of its external address.
 .RI "They are not available in " "(auto)client" " mode."
 
 .TP
-.BI "Prefix " "teredo_prefix"
-.RB "This directive specifies the " "Teredo prefix" " which the Teredo"
-relay and/or server will advertise.
-.IR "teredo_prefix" " must be a valid IPv6 prefix."
-
-.RB "The default value is " "2001:0000::" "."
-
-.BR "Do not use that directive" " if you don't know what you are"
-doing, as it is more than likely to break your Teredo connectivity.
-That option must not be used when Miredo serves as a Teredo client.
-
-.TP
 .BI "InterfaceMTU " "mtu"
 This directive overrides the default MTU size of 1280 bytes for the
-Teredo tunneling interface. It should not be used if the default Teredo
-prefix is used.
+Teredo tunneling interface.
 
 .SH GENERAL OPTIONS
 .TP
