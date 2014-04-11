@@ -54,30 +54,16 @@
 #include "conf.h"
 
 uid_t unpriv_uid = 0;
-const char *miredo_chrootdir = NULL;
 
 extern int
 drop_privileges (void)
 {
-	/*
-	 * We could chroot earlier, but we do it know to keep compatibility with
-	 * grsecurity Linux kernel patch that automatically removes capabilities
-	 * when chrooted.
-	 */
-	if ((miredo_chrootdir != NULL)
-	 && (chroot (miredo_chrootdir) || chdir ("/")))
-	{
-		syslog (LOG_ALERT, _("Error (%s): %m"), "chroot");
-		return -1;
-	}
-
 	// Definitely drops privileges
 	if (setuid (unpriv_uid))
 	{
 		syslog (LOG_ALERT, _("Error (%s): %m"), "setuid");
 		return -1;
 	}
-
 #ifdef HAVE_LIBCAP
 	cap_t s = cap_init ();
 	if (s != NULL)

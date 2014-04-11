@@ -44,7 +44,6 @@ extern int (*miredo_run) (miredo_conf *conf, const char *server);
 # include <sys/types.h> // uid_t
 
 extern uid_t unpriv_uid;
-extern const char *miredo_chrootdir;
 extern const char *miredo_name;
 
 # ifdef HAVE_LIBCAP

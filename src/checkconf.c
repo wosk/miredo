@@ -171,8 +171,6 @@ int main(int argc, char *argv[])
 		{ "foreground", no_argument,       NULL, 'f' },
 		{ "help",       no_argument,       NULL, 'h' },
 		{ "pidfile",    required_argument, NULL, 'p' },
-		{ "chroot",     required_argument, NULL, 't' },
-		{ "chrootdir",  required_argument, NULL, 't' },
 		{ "user",       required_argument, NULL, 'u' },
 		{ "username",   required_argument, NULL, 'u' },
 		{ "version",    no_argument,       NULL, 'V' },
@@ -182,7 +180,7 @@ int main(int argc, char *argv[])
 	const char *filename = NULL;
 
 	int c;
-	while ((c = getopt_long (argc, argv, "c:fhp:t:u:V", opts, NULL)) != -1)
+	while ((c = getopt_long (argc, argv, "c:fhp:u:V", opts, NULL)) != -1)
 		switch (c)
 		{
 			case 'c':

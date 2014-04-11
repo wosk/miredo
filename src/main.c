@@ -272,13 +272,6 @@ init_security (const char *username)
 	cap_set_flag (s, CAP_PERMITTED, 3, caps, CAP_SET);
 	cap_set_flag (s, CAP_EFFECTIVE, 3, caps, CAP_SET);
 
-	if (miredo_chrootdir != NULL)
-	{
-		static cap_value_t chroot_cap[] = { CAP_SYS_CHROOT };
-		cap_set_flag (s, CAP_PERMITTED, 1, chroot_cap, CAP_SET);
-		cap_set_flag (s, CAP_EFFECTIVE, 1, chroot_cap, CAP_SET);
-	}
-
 	cap_set_flag (s, CAP_PERMITTED, miredo_capc,
 	              (cap_value_t *)miredo_capv, CAP_SET);
 	cap_set_flag (s, CAP_EFFECTIVE, miredo_capc,
@@ -302,7 +295,7 @@ init_security (const char *username)
 int miredo_main (int argc, char *argv[])
 {
 	const char *username = NULL, *conffile = NULL, *servername = NULL,
-	           *pidfile = NULL, *chrootdir = NULL;
+	           *pidfile = NULL;
 	struct
 	{
 		unsigned foreground:1; /* Run in the foreground */
@@ -315,8 +308,6 @@ int miredo_main (int argc, char *argv[])
 		{ "foreground", no_argument,       NULL, 'f' },
 		{ "help",       no_argument,       NULL, 'h' },
 		{ "pidfile",    required_argument, NULL, 'p' },
-		{ "chroot",     required_argument, NULL, 't' },
-		{ "chrootdir",  required_argument, NULL, 't' },
 		{ "user",       required_argument, NULL, 'u' },
 		{ "username",   required_argument, NULL, 'u' },
 		{ "version",    no_argument,       NULL, 'V' },
@@ -336,7 +327,7 @@ int miredo_main (int argc, char *argv[])
 	memset (&flags, 0, sizeof (flags));
 
 	int c;
-	while ((c = getopt_long (argc, argv, "c:fhp:t:u:V", opts, NULL)) != -1)
+	while ((c = getopt_long (argc, argv, "c:fhp:u:V", opts, NULL)) != -1)
 		switch (c)
 		{
 
@@ -357,10 +348,6 @@ int miredo_main (int argc, char *argv[])
 
 			case 'u':
 				ONETIME_SETTING (username);
-				break;
-
-			case 't':
-				ONETIME_SETTING (chrootdir);
 				break;
 
 			case 'V':
@@ -398,30 +385,13 @@ int miredo_main (int argc, char *argv[])
 		conffile = conffile_buf;
 	}
 
-	/* Check if config file and chroot dir are present */
+	/* Check if config file is present */
 	if ((servername == NULL) && access (conffile, R_OK))
 	{
 		fprintf (stderr, _("Reading configuration from %s: %s\n"),
 				conffile, strerror (errno));
 		return 1;
 	}
-
-	if (chrootdir != NULL)
-	{
-		struct stat s;
-		errno = 0;
-
-		if (stat (chrootdir, &s) || !S_ISDIR(s.st_mode)
-		 || access (chrootdir, X_OK))
-		{
-			if (errno == 0)
-				errno = ENOTDIR;
-
-			error_errno (chrootdir);
-			return 1;
-		}
-	}
-	miredo_chrootdir = chrootdir;
 
 	if (pidfile == NULL)
 		str_len = sizeof (LOCALSTATEDIR"/run/" ".pid") + strlen (miredo_name);
