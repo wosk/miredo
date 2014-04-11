@@ -38,7 +38,6 @@ int miredo_version (void);
 int miredo (const char *conffile, const char *server_name, int pidfd);
 int drop_privileges (void);
 
-extern int (*miredo_diagnose) (void);
 extern int (*miredo_run) (miredo_conf *conf, const char *server);
 
 # include <sys/types.h> // uid_t

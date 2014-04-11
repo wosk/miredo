@@ -36,6 +36,7 @@
 #include <sys/time.h> /* for <sys/resource.h> */
 #include <sys/resource.h> /* getrlimit() */
 #include <sys/stat.h> /* fstat(), mkdir */
+#include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h> /* errno */
 #include <fcntl.h> /* O_RDONLY */
@@ -408,9 +409,17 @@ int miredo_main (int argc, char *argv[])
 
 	if (init_security (username))
 		return 1;
-
-	if (miredo_diagnose ())
-		return 1;
+	else
+	{
+		int fd = socket (AF_INET6, SOCK_DGRAM, 0);
+		if (fd == -1)
+		{
+			fprintf (stderr, _("IPv6 stack not available: %s\n"),
+			         strerror (errno));
+			return 1;
+		}
+	        close (fd);
+        }
 
 	int pipes[2];
 	if (pipe (pipes))

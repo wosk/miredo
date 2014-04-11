@@ -52,14 +52,6 @@
 
 
 static int
-server_diagnose (void)
-{
-
-	return 0;
-}
-
-
-static int
 server_run (miredo_conf *conf, const char *server_name)
 {
 	teredo_server *server;
@@ -161,7 +153,6 @@ int main (int argc, char *argv[])
 #endif
 
 	miredo_name = "miredo-server";
-	miredo_diagnose = server_diagnose;
 	miredo_run = server_run;
 
 	return miredo_main (argc, argv);

@@ -67,19 +67,6 @@
 static void miredo_setup_fd (int fd);
 static void miredo_setup_nonblock_fd (int fd);
 
-static int relay_diagnose (void)
-{
-	char errbuf[LIBTUN6_ERRBUF_SIZE];
-	if (tun6_driver_diagnose (errbuf))
-	{
-		fputs (errbuf, stderr);
-		return -1;
-	}
-
-	return 0;
-}
-
-
 typedef struct miredo_tunnel
 {
 	tun6 *tunnel;
@@ -700,7 +687,6 @@ int main (int argc, char *argv[])
 #endif
 
 	miredo_name = "miredo";
-	miredo_diagnose = relay_diagnose;
 	miredo_run = relay_run;
 
 	return miredo_main (argc, argv);
