@@ -35,11 +35,6 @@ static const char *invalid_name =
 
 int main (void)
 {
-	char errbuf[LIBTUN6_ERRBUF_SIZE];
-
-	int res = tun6_driver_diagnose (errbuf);
-	fprintf (stderr, "%s\n", errbuf);
-
 	openlog ("libtun6-diagnose", LOG_PERROR, LOG_USER);
 	tun6 *t = tun6_create (invalid_name);
 	if (t != NULL)
@@ -51,21 +46,14 @@ int main (void)
 	t = tun6_create (NULL);
 	if (t == NULL)
 	{
-		if ((res == 0) && (errno != EPERM) && (errno != EACCES))
-			return 1;
+		if ((errno == EPERM) || (errno == EACCES))
+		{
+			puts ("Warning: cannot perform full libtun6 test");
+			return 77;
+		}
+		return 1;
 	}
-	else
-	{
-		tun6_destroy (t);
-		if (res)
-			return 1;
-	}
-
-	if (t == NULL)
-	{
-		puts ("Warning: cannot perform full libtun6 test");
-		return 77;
-	}
+	tun6_destroy (t);
 
 	/* TODO: further testing */
 	t = tun6_create ("diagnose");
@@ -80,11 +68,12 @@ int main (void)
 	}
 	unsigned id = tun6_getId (t);
 	if ((id == 0) || (if_nametoindex ("diagnose") != id))
-		res = -1;
-	tun6_destroy (t);
-	if (res)
-		return 1;
+		goto fail;
 
+	tun6_destroy (t);
 	closelog ();
 	return 0;
+fail:
+	tun6_destroy (t);
+	return 1;
 }
