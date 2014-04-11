@@ -64,7 +64,6 @@
 #include "miredo.h"
 #include "conf.h"
 
-static void miredo_setup_fd (int fd);
 static void miredo_setup_nonblock_fd (int fd);
 
 typedef struct miredo_tunnel
@@ -251,11 +250,20 @@ create_dynamic_tunnel (const char *ifname, int *pfd)
 		return NULL;
 
 	int fd[2];
-	if (socketpair (AF_UNIX, SOCK_STREAM, 0, fd))
-		goto error;
+#ifdef SOCK_CLOEXEC
+	if (socketpair (AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0, fd))
+#else
+	errno = EINVAL;
+#endif
+	{
+		if (errno != EINVAL)
+			goto error;
+		if (socketpair (AF_UNIX, SOCK_STREAM, 0, fd))
+			goto error;
 
-	miredo_setup_fd (fd[0]);
-	miredo_setup_fd (fd[1]);
+		fcntl (fd[0], F_SETFD, FD_CLOEXEC);
+		fcntl (fd[1], F_SETFD, FD_CLOEXEC);
+	}
 
 	char ifindex[2 * sizeof (unsigned) + 1];
 	snprintf (ifindex, sizeof (ifindex), "%X", tun6_getId (tunnel));
@@ -657,19 +665,13 @@ relay_run (miredo_conf *conf, const char *server_name)
 }
 
 
-static void miredo_setup_fd (int fd)
-{
-	(void) fcntl (fd, F_SETFD, FD_CLOEXEC);
-}
-
-
 static void miredo_setup_nonblock_fd (int fd)
 {
 	int flags = fcntl (fd, F_GETFL);
 	if (flags == -1)
 		flags = 0;
 	(void) fcntl (fd, F_SETFL, O_NONBLOCK | flags);
-	miredo_setup_fd (fd);
+	fcntl (fd, F_SETFD, FD_CLOEXEC);
 }
 
 
