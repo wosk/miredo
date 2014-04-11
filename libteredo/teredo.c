@@ -83,11 +83,11 @@ int teredo_socket (uint32_t bind_ip, uint16_t port)
 #endif
 	{
 		fd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		if (fd == -1)
-			return -1; // failure
-
-		fcntl (fd, F_SETFD, FD_CLOEXEC);
+		if (fd != -1)
+			fcntl (fd, F_SETFD, FD_CLOEXEC);
 	}
+	if (fd == -1)
+		return -1;
 
 	if (bind (fd, (struct sockaddr *)&myaddr, sizeof (myaddr)))
 	{
