@@ -154,34 +154,24 @@ error_errno (const char *str)
 static int
 create_pidfile (const char *path)
 {
-	int fd;
+	int fd = open (path, O_WRONLY|O_CREAT|O_NOFOLLOW|O_CLOEXEC, 0644);
+	if (fd == -1)
+		return -1;
 
-	fd = open (path, O_WRONLY|O_CREAT|O_NOFOLLOW|O_CLOEXEC, 0644);
-	if (fd != -1)
-	{
-		char buf[20]; // enough for > 2^64
-		struct stat s;
+	struct stat s;
+	char buf[4 * sizeof (int)];
+	int len = snprintf (buf, sizeof (buf), "%u", (unsigned)getpid ());
 
-		snprintf (buf, sizeof (buf), "%d", (int)getpid ());
-		buf[sizeof (buf) - 1] = '\0';
+	/* Locks and writes the PID file */
+	if (fstat (fd, &s) == 0
+	 && (errno = EACCES, S_ISREG (s.st_mode))
+	 && lockf (fd, F_TLOCK, 0) == 0
+	 && ftruncate (fd, 0) == 0
+	 && write (fd, buf, len) == len
+	 && fdatasync (fd) == 0)
+		return fd;
 
-		errno = 0;
-
-		/* Locks the PID file */
-		if ((fstat (fd, &s) == 0)
-		 && S_ISREG (s.st_mode)
-		 && (lockf (fd, F_TLOCK, 0) == 0)
-		 && (ftruncate (fd, 0) == 0)
-		 && (write (fd, buf, strlen (buf)) == (ssize_t)strlen (buf))
-		 && (fdatasync (fd) == 0))
-			return fd;
-
-		if (errno == 0) /* !S_ISREG */
-			errno = EACCES;
-
-		(void)close (fd);
-	}
-
+	close (fd);
 	return -1;
 }
 
