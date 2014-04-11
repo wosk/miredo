@@ -42,25 +42,6 @@ int teredo_server_check (char *errmsg, size_t len);
 teredo_server *teredo_server_create (uint32_t ip1, uint32_t ip2);
 
 /**
- * Changes the Teredo prefix to be advertised by a Teredo server.
- * If not set, the internal default will be used.
- *
- * @param s server handler as returned from teredo_server_create(),
- * @param prefix 32-bits IPv6 address prefix (network byte order).
- *
- * @return 0 on success, -1 if the prefix is not acceptable.
- */
-int teredo_server_set_prefix (teredo_server *s, uint32_t prefix);
-
-/**
- * Returns the Teredo prefix currently advertised by the server (in network
- * byte order).
- *
- * @param s server handler as returned from teredo_server_create(),
- */
-uint32_t teredo_server_get_prefix (const teredo_server *s);
-
-/**
  * Changes the link MTU advertised by the Teredo server.
  * If not set, the internal default will be used (currently 1280 bytes).
  *

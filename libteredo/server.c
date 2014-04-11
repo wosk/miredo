@@ -66,7 +66,7 @@ struct teredo_server
 	int fd_primary, fd_secondary; // UDP/IPv4 sockets
 
 	/* These are all in network byte order (including MTU!!) */
-	uint32_t server_ip, server_ip2, prefix, advLinkMTU;
+	uint32_t server_ip, server_ip2, advLinkMTU;
 
 	union teredo_addr lladdr; // server link-local IPv6 address
 };
@@ -95,6 +95,7 @@ SendRA (const teredo_server *restrict s, const struct teredo_packet *p,
 		{ &orig, 8 },
 		{ &ra, sizeof (ra) }
 	};
+        uint32_t prefix = htonl(TEREDO_PREFIX);
 
 	// Authentification header
 	// TODO: support for secure qualification
@@ -138,7 +139,7 @@ SendRA (const teredo_server *restrict s, const struct teredo_packet *p,
 	ra.pi.nd_opt_pi_valid_time = 0xffffffff;
 	ra.pi.nd_opt_pi_preferred_time = 0xffffffff;
 	addr = &ra.pi.nd_opt_pi_prefix;
-	memcpy (&addr->s6_addr[0], &s->prefix, sizeof (s->prefix));
+	memcpy (&addr->s6_addr[0], &prefix, sizeof (prefix));
 	memcpy (&addr->s6_addr[4], &s->server_ip, sizeof (s->server_ip));
 	//memset (addr->ip6.s6_addr + 8, 0, 8);
 
@@ -335,8 +336,6 @@ teredo_process_packet (const teredo_server *s, bool sec)
 		return -2;
 	}
 
-	const uint32_t myprefix = s->prefix;
-
 	// Teredo server case number 4
 	if (IN6_IS_ADDR_LINKLOCAL (&ip6->ip6_src)
 	 && IN6_ARE_ADDR_EQUAL (&in6addr_allrouters, &ip6->ip6_dst)
@@ -345,7 +344,7 @@ teredo_process_packet (const teredo_server *s, bool sec)
 	 && (((const struct icmp6_hdr *)(ip6 + 1))->icmp6_type == ND_ROUTER_SOLICIT))
 		goto accept;
 
-	if (IN6_TEREDO_PREFIX (&ip6->ip6_src) == myprefix)
+	if (IN6_TEREDO_PREFIX (&ip6->ip6_src) == htonl (TEREDO_PREFIX))
 	{
 		/** Source address is Teredo **/
 		// Teredo server case number 5
@@ -357,7 +356,7 @@ teredo_process_packet (const teredo_server *s, bool sec)
 	{
 		/** Source address is NOT Teredo **/
 		// Teredo server case number 6
-		if ((IN6_TEREDO_PREFIX (&ip6->ip6_dst) == myprefix)
+		if ((IN6_TEREDO_PREFIX (&ip6->ip6_dst) == htonl (TEREDO_PREFIX))
 		 && (IN6_TEREDO_SERVER (&ip6->ip6_dst) == s->server_ip))
 			goto accept;
 	}
@@ -437,7 +436,7 @@ accept:
 		return -2;
 	}
 
-	if (IN6_TEREDO_PREFIX (&ip6->ip6_dst) != myprefix)
+	if (IN6_TEREDO_PREFIX (&ip6->ip6_dst) != htonl (TEREDO_PREFIX))
 		return teredo_send_ipv6 (packet.ip6,
 		                         sizeof (*ip6) + plen) ? 2 : -1;
 
@@ -539,7 +538,6 @@ teredo_server *teredo_server_create (uint32_t ip1, uint32_t ip2)
 		memset (s, 0, sizeof (*s));
 		s->server_ip = ip1;
 		s->server_ip2 = ip2;
-		s->prefix = htonl (TEREDO_PREFIX);
 		s->advLinkMTU = htonl (1280);
 		s->lladdr.teredo.prefix = htonl (0xfe800000);
 		//s->lladdr.teredo.server_ip = 0;
@@ -576,22 +574,6 @@ teredo_server *teredo_server_create (uint32_t ip1, uint32_t ip2)
 	return NULL;
 }
 
-
-int teredo_server_set_prefix (teredo_server *s, uint32_t prefix)
-{
-	if (is_valid_teredo_prefix (prefix))
-	{
-		s->prefix = prefix;
-		return 0;
-	}
-	return -1;
-}
-
-
-uint32_t teredo_server_get_prefix (const teredo_server *s)
-{
-	return s->prefix;
-}
 
 int teredo_server_set_MTU (teredo_server *s, uint16_t mtu)
 {
