@@ -1,6 +1,6 @@
-Miredo : open-source Teredo
-============================
-Copyright (C) 2004-2007 Rémi Denis-Courmont.
+Miredo: open-source Teredo
+===========================
+Copyright (C) 2004-2014 Rémi Denis-Courmont.
 
   Welcome to Miredo’s user’s guide!
 
@@ -48,59 +48,13 @@ System requirements
 kernels with IPv6 and userland layer-3 tunneling support. See below
 for system specific notes.
 
-  Miredo is believed to be architecture-independant, but it was only
-properly tested on Linux i386, with GCC 4.1, GCC 3.3 and ICC 8.0.
-GCC 2.95 is purposedly not supported.
-
-  When available, Miredo can use the following optional libraries :
+  When available, Miredo can use the following optional libraries:
  - GNU gettext for localization,
  - libcap (currently Linux-specific) for POSIX capabilities,
  - Judy dynamic arrays library for better scalability.
 
-Linux:
--------
-  Miredo runs fine on Linux kernel 2.6.9; if possible, kernel version
-2.6.12 or more recent is recommended. It can run with older versions as
-well, including the 2.4 branch. However, there are known problems with
-the -experimental- IPv6 stack of these kernel releases; this is not
-specific to the usage of Miredo.
-  Miredo requires the Universal TUNTAP driver (CONFIG_TUN) and IPv6
-(CONFIG_IPV6).
-
-  For proper source address selection (RFC3484 support), kernel version
-2.6.17.2 and GNU/libc 2.5 are required.
-
-FreeBSD:
----------
-  Miredo works fine with FreeBSD 5.5 and up. You can use the net/miredo
-port. There is a known problem with the FreeBSD 6.2 and older; it
-should mostly affect Miredo in "relay" mode.
-  FreeBSD 4.11 is not supported.
-
-OpenBSD:
----------
-  OpenBSD might work. Version 3.7 was tested with older releases.
-
-NetBSD:
---------
-  NetBSD 4.0 is required, for IPv6 tunneling. Miredo should be
-available through pkgsrc.
-
-Darwin (Mac OS X):
--------------------
-  Miredo works on Mac OS X (Panther, Tiger) and might work on other
-Darwin variants. On Mac OS X, you will have to install a third party
-tunneling driver; Miredo was tested with Mattis Nissler's tuntap from:
-http://www-user.rhrk.uni-kl.de/~nissler/tuntap/
-
-  Note that Mac OS X users should consider using Miredo-OSX from
-http://www.deepdarc.com/ which provides prebuilt OS X binaries of
-Miredo along with Nissler's tuntap, LibJudy and OS X specific additions
-and tweaks.
-
-DragonFly:
------------
-  Miredo should work. It is in NetBSD's pkgsrc.
+On Linux, Miredo requires the Universal TUNTAP driver (CONFIG_TUN) and
+of course the IPv6 protocol suites (CONFIG_IPV6) support from kernel.
 
 
 Quick usage
@@ -117,20 +71,20 @@ instructions. Miredo can be installed the usual way:
 # make install
 
   Miredo has no particular required dependencies, besides the usual
-C/C++ compilers and development libraries.
+C compiler and development libraries.
 
   A sample configuration file is automatically installed at
-/usr/local/etc/miredo.conf - unless the file already existed (which
-means you are probably reinstalling or upgrading Miredo). This sample
-will cause Miredo to run as a Teredo client, with “teredo.remlab.net”
-(Miredo official testing Teredo server) as its Teredo server. These
-default settings should be fine for most users.
+/usr/local/etc/miredo/miredo.conf - unless the file already existed
+(which means you are probably reinstalling or upgrading Miredo). This
+sample will cause Miredo to run as a Teredo client, with
+“teredo.remlab.net” (Miredo official testing Teredo server) as its
+Teredo server. These default settings should be fine for most users.
 
 Starting the program:
 ----------------------
   Before you start, please note that Miredo must be started by root,
 and that it will detach and run in the background. If something goes
-wrong, there are two ways two know what :
+wrong, there are two ways two know what:
 - read your system logs (typically /var/log/syslog),
 - force Miredo to run in the foreground (that’s meant for debugging),
   by starting it with the “--foreground” command line parameter, and
@@ -142,7 +96,7 @@ wrong, there are two ways two know what :
   It will need some time to initialize, particularly if you are behind
 a restricted NAT, which is frequent. After about 20 seconds, you should
 have access to the IPv6 Internet through Teredo, with a public Teredo
-IPv6 address on the “teredo” networking interface :
+IPv6 address on the “teredo” networking interface:
 
 # ifconfig teredo
 teredo    Link encap:UNSPEC  HWaddr 00-00-00-00-00-00-00-00-00-00-00...
@@ -154,22 +108,21 @@ teredo    Link encap:UNSPEC  HWaddr 00-00-00-00-00-00-00-00-00-00-00...
           collisions:0 txqueuelen:500
           RX bytes:468 (468.0 b)  TX bytes:560 (560.0 b)
 
-# ping6 -c 4 www.kame.net
-PING www.kame.net(orange.kame.net) 56 data bytes
-64 bytes from orange.kame.net: icmp_seq=1 ttl=50 time=558 ms
-64 bytes from orange.kame.net: icmp_seq=2 ttl=50 time=585 ms
-64 bytes from orange.kame.net: icmp_seq=3 ttl=50 time=562 ms
-64 bytes from orange.kame.net: icmp_seq=4 ttl=50 time=552 ms
+# ping6 -c 4 www.example.com
+PING www.example.com(2001:db8::dead:beef) 56 data bytes
+64 bytes from 2001:db8::dead:beef: icmp_seq=1 ttl=50 time=558 ms
+64 bytes from 2001:db8::dead:beef: icmp_seq=2 ttl=50 time=585 ms
+64 bytes from 2001:db8::dead:beef: icmp_seq=3 ttl=50 time=562 ms
+64 bytes from 2001:db8::dead:beef: icmp_seq=4 ttl=50 time=552 ms
 
---- www.kame.net ping statistics ---
+--- www.example.com ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time 3003ms
 rtt min/avg/max/mdev = 552.830/564.865/585.031/12.218 ms
 
 Monitoring:
 ------------
   If you wish to monitor the Teredo tunnel, I suggest you use famous
-network analyzer Wireshark (formerly Ethereal®) which includes a Teredo
-“dissector”.
+network analyzer Wireshark which includes a Teredo “dissector”.
 
 Teredo relay and/or server:
 ----------------------------
@@ -186,21 +139,10 @@ Securing you Miredo installation
 =================================
 
   By default, Miredo drops its root privileges and runs as user nobody.
-While that is far more secure than keeping root privileges as previous
-versions did by default, it is not optimal. If you are security
-concious, paranoid, or if you are building a package, you are advised
-to perform the following steps to restrict the impact of a possible
-compromise of the Miredo daemon.
-
-  They are some steps to secure Miredo installation, because they are
-non trivial and non portable, they cannot be done automatically. That
-is why miredo defaults to using “nobody” user account which is
-available on any POSIX-like operating system.
-
-1) System user:
-----------------
-  Miredo should run with its own user account rather than common user
-“nobody”. They are two ways to do that :
+While that is far more secure than keeping root privileges as early
+versions did, it is not optimal. Miredo should rather run with its own
+user account rather than common user “nobody”. They are two ways to
+achieve that:
 
 - You can enable the “--enable-miredo-user” command line option when
   running the source code configure script. If you are a packager,
@@ -214,29 +156,12 @@ available on any POSIX-like operating system.
   # /usr/local/sbin/miredo -u miredo
 
 NOTE: If you are running Miredo as a Teredo client, Miredo will spawn a
-separate privileged process whose only job will be the Teredo interface
-parameters (it must be root to do that). If someone breaks Miredo, it
-might still be able to break your IPv6 networking setup, but it should
-not be able to compromise the whole system.
+separate privileged process to configure the Teredo interface (requiring
+root). If someone breaks Miredo, it might still be possible to break the
+IPv6 networking setup, but not compromise the whole system.
 
-2) Chroot jail:
-----------------
-  Chroot jail can be enabled with the “-t” command line option. Note
-that when using miredo as a Teredo client, you will typically have to
-install your DNS resolver library and configuration within the chroot
-environment, which is why the feature is currently disabled by default.
-  On Linux/libc6, that would consist of copying /etc/resolv.conf,
-/etc/nsswitch.conf and the Name Service Switch shared objects within
-the chroot. You will also have to resynchronize /etc/resolv.conf within
-the chroot with the one at the system root every time it is modified
-(such as when the DHCP client updates /etc/resolv.conf).
-
-  If you intend to use miredo only as a Teredo relay and/or server,
-you should really enable the chroot, as it is safer and should work
-fine “out of the box”.
-
-3) POSIX capabilities:
------------------------
+POSIX capabilities:
+--------------------
   Miredo supports POSIX.1e capabilities (at least on Linux), if they
 are available. You should not need to worry as it is entirely
 automatic.
