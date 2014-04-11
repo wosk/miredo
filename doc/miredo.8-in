@@ -18,7 +18,7 @@
 miredo \- Teredo IPv6 tunneling for Unix
 .SH SYNOPSIS
 .BR "miredo" " [" "-c config_file" "] [" "-f" "] [" "-u user" "] ["
-.BR "-t chrootdir" "] [" "server_name" "]"
+.BR "server_name" "]"
 
 .SH DESCRIPTON
 .B Miredo
@@ -62,13 +62,6 @@ Do not detach from the console. Run the program in the foreground.
 Display some help and exit.
 
 .TP
-.BR "\-t" " or " "\-\-chrootdir"
-Specify a directory to use as a root after initialization is completed.
-When used as a Teredo client, the hostname resolver library files must
-be present in the chroot. The directory can safely be left empty for a
-Teredo relay.
-
-.TP
 .BR "\-u username" " or " "\-\-user username"
 Override the user that the program will run as. By default, it runs as
 .BR "nobody" "."
@@ -91,11 +84,11 @@ requires
 .I root
 privileges to create its IPv6 tunneling network interface, and to set
 it up properly. Once its initialization is complete, it will
-.IR "setgid" ", " "chroot" " into an empty directory and ultimately"
-.IR "setuid" " (see option " "-u" "), so as to decrease the system's"
-exposure to potential security issues. However, if Miredo runs as a
-Teredo client, it needs root privileges when running, in order to
-change the tunneling network interface settings automatically. To
+.IR "setgid" " and " "setuid" " (see option " "-u" "), so as to"
+decrease the system's exposure to potential security issues.
+However, if Miredo runs as a Teredo client,
+it needs root privileges when running,
+to change the tunneling network interface settings automatically. To
 .RI "prevent possible root compromise, Miredo implements " "priveleges"
 .IR "separation" ". The process that handles data from the network is"
 not privileged.

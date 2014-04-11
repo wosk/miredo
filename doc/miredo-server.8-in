@@ -64,9 +64,8 @@ requires
 .I root
 privileges to create open a raw IPv6 socket that is used to emit ICMPv6
 Echo Request packets. Once its initialization is complete, it will
-.IR "setgid" ", " "chroot" " into an empty directory and ultimately"
-.IR "setuid" " (see option " "-u" "), so as to decrease the system's"
-exposure to potential security issues.
+.IR "setgid" " and " "setuid" " (see option " "-u" "), so as to"
+ decrease the system's exposure to potential security issues.
 
 .SH SIGNALS
 .BR "SIGHUP" " Force a reload of the daemon."
