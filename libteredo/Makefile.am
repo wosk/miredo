@@ -40,7 +40,7 @@ libteredo_common_la_SOURCES =	teredo.c v4global.c v4global.h \
 libteredo_common_la_LDFLAGS = -no-undefined
 
 # libteredo.la
-libteredo_la_SOURCES =	init.c relay.c security.c security.h md5.c md5.h \
+libteredo_la_SOURCES =	relay.c security.c security.h md5.c md5.h \
 			packets.c packets.h peerlist.c peerlist.h \
 			clock.c clock.h thread.h stub.c
 if TEREDO_CLIENT
@@ -61,7 +61,7 @@ libteredo_la_LDFLAGS = -no-undefined -export-symbols $(srcdir)/libteredo.sym \
 # -- backward compatibility break --
 # 5) added teredo_packet.dest_ipv4, removed teredo_set_cone_ignore() (1.1.7)
 # -- backward compatibility break --
-# 6) removed teredo_run() (1.3.0)
+# 6) removed teredo_run(), teredo_startup(), teredo_cleanup() (1.3.0)
 
 # libteredo-server.la
 libteredo_server_la_SOURCES = server.c server.h

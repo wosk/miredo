@@ -44,18 +44,6 @@ int main (void)
 	int val;
 	void *pval;
 
-#ifdef MIREDO_TEREDO_CLIENT
-	val = teredo_startup (true);
-	assert (val == 0);
-	teredo_cleanup (true);
-#else
-	val = teredo_startup (true);
-	assert (val == -1);
-#endif
-
-	val = teredo_startup (false);
-	assert (val == 0);
-
 	// 192.0.2.1 can never be assigned to any host
 	tunnel = teredo_create (htonl (0xC0000201), 0);
 	assert (tunnel == NULL);
@@ -92,6 +80,5 @@ int main (void)
 
 	teredo_destroy (tunnel);
 
-	teredo_cleanup (false);
 	return 0;
 }

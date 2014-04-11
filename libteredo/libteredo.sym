@@ -1,5 +1,3 @@
-teredo_startup
-teredo_cleanup
 teredo_create
 teredo_destroy
 teredo_get_privdata
