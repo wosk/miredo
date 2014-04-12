@@ -66,28 +66,17 @@ static int run_script (void)
 	pid_t pid;
 	char *argv[] = { (char *)script_path, NULL };
 	posix_spawn_file_actions_t actions;
-	posix_spawnattr_t attr;
 
 	posix_spawn_file_actions_init (&actions);
 	posix_spawn_file_actions_adddup2 (&actions, 2, STDIN_FILENO);
 	posix_spawn_file_actions_adddup2 (&actions, 2, STDOUT_FILENO);
 
-	posix_spawnattr_init (&attr);
-	{
-		sigset_t set;
-
-		sigemptyset (&set);
-		posix_spawnattr_setsigmask (&attr, &set);
-	}
-	posix_spawnattr_setflags (&attr, POSIX_SPAWN_SETSIGMASK);
-
-	if (posix_spawn (&pid, script_path, &actions, &attr, argv, environ))
+	if (posix_spawn (&pid, script_path, &actions, NULL, argv, environ))
 	{
 		syslog (LOG_ERR, "Could not execute %s: %m", script_path);
 		pid = -1;
 	}
 
-	posix_spawnattr_destroy (&attr);
 	posix_spawn_file_actions_destroy (&actions);
 
 	if (pid == -1)
@@ -105,6 +94,13 @@ static int run_script (void)
 
 int main (int argc, char *argv[])
 {
+	{
+		sigset_t set;
+
+		sigemptyset (&set);
+		pthread_sigmask (SIG_SETMASK, &set, NULL);
+	}
+
 	openlog ("miredo-privproc", LOG_PID | LOG_PERROR, LOG_DAEMON);
 
 	if (argc != 2)
