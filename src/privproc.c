@@ -36,6 +36,7 @@
 #include <sys/wait.h> /* waitpid() */
 #include <arpa/inet.h> /* inet_ntop() */
 #include <net/if.h> /* if_indextoname() */
+#include <fcntl.h>
 #include <signal.h> /* sigemptyset() */
 #include <spawn.h>
 #include <pthread.h> /* pthread_sigmask() */
@@ -65,22 +66,12 @@ static int run_script (void)
 {
 	pid_t pid;
 	char *argv[] = { (char *)script_path, NULL };
-	posix_spawn_file_actions_t actions;
 
-	posix_spawn_file_actions_init (&actions);
-	posix_spawn_file_actions_adddup2 (&actions, 2, STDIN_FILENO);
-	posix_spawn_file_actions_adddup2 (&actions, 2, STDOUT_FILENO);
-
-	if (posix_spawn (&pid, script_path, &actions, NULL, argv, environ))
+	if (posix_spawn (&pid, script_path, NULL, NULL, argv, environ))
 	{
 		syslog (LOG_ERR, "Could not execute %s: %m", script_path);
-		pid = -1;
-	}
-
-	posix_spawn_file_actions_destroy (&actions);
-
-	if (pid == -1)
 		return -1;
+	}
 
 	int res;
 	while (waitpid (pid, &res, 0) == -1);
@@ -119,6 +110,14 @@ int main (int argc, char *argv[])
 		cap_free (s);
 	}
 #endif
+
+	int infd = fcntl (STDIN_FILENO, F_DUPFD_CLOEXEC, 0);
+	int outfd = fcntl (STDOUT_FILENO, F_DUPFD_CLOEXEC, 0);
+	if (infd == -1 || outfd == -1
+	 || dup2 (STDERR_FILENO, STDIN_FILENO) == -1
+	 || dup2 (STDERR_FILENO, STDOUT_FILENO) == -1)
+		exit (1);
+
 	openlog ("miredo-privproc", LOG_PID | LOG_PERROR, LOG_DAEMON);
 
 	if (argc != 2)
@@ -144,7 +143,7 @@ int main (int argc, char *argv[])
 		int res = -1;
 
 		/* Waits until new (changed) settings arrive */
-		if (recv (0, &cfg, sizeof (cfg), MSG_WAITALL) != sizeof (cfg))
+		if (recv (infd, &cfg, sizeof (cfg), MSG_WAITALL) != sizeof (cfg))
 			break;
 
 		/* Sanity checks */
@@ -187,7 +186,7 @@ int main (int argc, char *argv[])
 
 		/* Notify main process of completion */
 	error:
-		if (send (1, &res, sizeof (res), MSG_NOSIGNAL) != sizeof (res))
+		if (send (outfd, &res, sizeof (res), MSG_NOSIGNAL) != sizeof (res))
 			break;
 
 		/* Prepend "OLD_" to variables names for next script invocation */
@@ -222,5 +221,7 @@ int main (int argc, char *argv[])
 		run_script ();
 	}
 
+	close (outfd);
+	close (infd);
 	exit (0);
 }
