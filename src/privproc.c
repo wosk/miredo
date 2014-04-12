@@ -100,21 +100,6 @@ int main (int argc, char *argv[])
 		sigemptyset (&set);
 		pthread_sigmask (SIG_SETMASK, &set, NULL);
 	}
-
-	openlog ("miredo-privproc", LOG_PID | LOG_PERROR, LOG_DAEMON);
-
-	if (argc != 2)
-		exit (1);
-
-	unsigned ifindex = strtoul (argv[1], NULL, 0x10);
-	if (ifindex == 0)
-		exit (1);
-
-	char intbuf[21];
-	if ((size_t)snprintf (intbuf, sizeof (intbuf), "%u", ifindex)
-	             >= sizeof (intbuf))
-		exit (1);
-
 #ifdef HAVE_LIBCAP
 	{
 		cap_t s;
@@ -134,6 +119,19 @@ int main (int argc, char *argv[])
 		cap_free (s);
 	}
 #endif
+	openlog ("miredo-privproc", LOG_PID | LOG_PERROR, LOG_DAEMON);
+
+	if (argc != 2)
+		exit (1);
+
+	unsigned ifindex = strtoul (argv[1], NULL, 0x10);
+	if (ifindex == 0)
+		exit (1);
+
+	char intbuf[21];
+	if ((size_t)snprintf (intbuf, sizeof (intbuf), "%u", ifindex)
+	             >= sizeof (intbuf))
+		exit (1);
 
 	setenv ("IFINDEX", intbuf, 1);
 
