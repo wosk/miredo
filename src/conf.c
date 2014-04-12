@@ -286,7 +286,7 @@ bool miredo_conf_read_file (miredo_conf *conf, const char *path)
 {
 	assert (path != NULL);
 
-	FILE *stream = fopen (path, "r");
+	FILE *stream = fopen (path, "rte");
 	if (stream != NULL)
 	{
 		bool ret = miredo_conf_read_FILE (conf, stream);
