@@ -128,11 +128,9 @@ int main (int argc, char *argv[])
 	if (ifindex == 0)
 		exit (1);
 
-	char intbuf[21];
-	if ((size_t)snprintf (intbuf, sizeof (intbuf), "%u", ifindex)
-	             >= sizeof (intbuf))
-		exit (1);
+	char intbuf[4 * sizeof (ifindex)];
 
+	sprintf (intbuf, "%u", ifindex);
 	setenv ("IFINDEX", intbuf, 1);
 
 	setenv ("OLD_STATE", "down", 1);
