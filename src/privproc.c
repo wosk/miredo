@@ -150,7 +150,8 @@ int main (int argc, char *argv[])
 			break;
 
 		/* Sanity checks */
-		if ((cfg.addr.s6_addr[0] == 0xff) || (cfg.mtu < 1280))
+		if (IN6_TEREDO_PREFIX(&cfg.addr) != htonl (TEREDO_PREFIX)
+		 || (cfg.mtu < 1280))
 			break;
 
 		/* Prepare environment for hook script */
