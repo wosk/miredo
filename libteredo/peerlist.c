@@ -232,7 +232,7 @@ static LIBTEREDO_NORETURN void *garbage_collector (void *data)
 	for (;;)
 	{
 		struct timespec delay = { .tv_sec = l->expiration };
-		while (clock_nanosleep (CLOCK_REALTIME, 0, &delay, &delay));
+		teredo_sleep (&delay);
 
 		int state;
 		pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &state);
