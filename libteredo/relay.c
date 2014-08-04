@@ -1256,9 +1256,6 @@ void *teredo_set_privdata (teredo_tunnel *t, void *opaque)
 }
 
 
-/**
- * Thread-safety: FIXME.
- */
 void *teredo_get_privdata (const teredo_tunnel *t)
 {
 	assert (t != NULL);
@@ -1267,9 +1264,6 @@ void *teredo_get_privdata (const teredo_tunnel *t)
 }
 
 
-/**
- * Thread-safety: FIXME.
- */
 void teredo_set_recv_callback (teredo_tunnel *restrict t, teredo_recv_cb cb)
 {
 	assert (t != NULL);
@@ -1277,9 +1271,6 @@ void teredo_set_recv_callback (teredo_tunnel *restrict t, teredo_recv_cb cb)
 }
 
 
-/**
- * Thread-safety: FIXME.
- */
 void teredo_set_icmpv6_callback (teredo_tunnel *restrict t,
                                  teredo_icmpv6_cb cb)
 {
@@ -1294,10 +1285,8 @@ void teredo_set_state_cb (teredo_tunnel *restrict t, teredo_state_up_cb u,
 #ifdef MIREDO_TEREDO_CLIENT
 	assert (t != NULL);
 
-	pthread_rwlock_wrlock (&t->state_lock);
 	t->up_cb = (u != NULL) ? u : teredo_dummy_state_up_cb;
 	t->down_cb = (d != NULL) ? d : teredo_dummy_state_down_cb;
-	pthread_rwlock_unlock (&t->state_lock);
 #else
 	(void)t;
 	(void)u;

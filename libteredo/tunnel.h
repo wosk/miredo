@@ -238,6 +238,9 @@ typedef void (*teredo_recv_cb) (void *opaque, const void *data, size_t len);
  * Sets a callback to receive IPv6 packets decapsulated from the Teredo
  * tunnel. If not set, incoming packets are dropped.
  *
+ * @note This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
+ *
  * @param t Teredo tunnel instance
  * @param cb callback (or NULL to ignore packets)
  */
@@ -280,6 +283,9 @@ typedef void (*teredo_icmpv6_cb) (void *opaque, const void *data, size_t len,
  * Registers a callback to emit ICMPv6 messages when the Teredo tunnel wants
  * to report an error back. If not set, error messages are not sent.
  *
+ * @note This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
+ *
  * @param t Teredo tunnel instance
  * @param cb callback (ot NULL to ignore ICMPv6 errors)
  */
@@ -310,7 +316,8 @@ typedef void (*teredo_state_down_cb) (void *opaque);
  * Any packet sent when the relay/client is down will be ignored.
  * The callbacks function might be called from a separate thread.
  *
- * Thread-safety: This function is thread-safe.
+ * @note This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
  *
  * @param t Teredo tunnel instance
  * @param up usability event callback (or NULL to ignore event)
