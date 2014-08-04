@@ -63,7 +63,7 @@ typedef struct teredo_tunnel teredo_tunnel;
  * Creates a teredo_tunnel instance. teredo_preinit() must have been
  * called first.
  *
- * Thread-safety: This function is thread-safe.
+ * @note This function is thread-safe.
  *
  * @param ipv4 IPv4 (network byte order) to bind to, or 0 if unspecified.
  * @param port UDP/IPv4 port number (network byte order) or 0 if unspecified.
@@ -83,9 +83,8 @@ teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port);
  * Releases all resources (sockets, memory chunks...) and terminates all
  * threads associated with a teredo_tunnel instance.
  *
- * Thread-safety: This function is thread-safe. However, you must obviously
- * not call it if any other thread (including the calling one) is still using
- * the specified tunnel in some way.
+ * @warning This function must obviously not be called from within a callback
+ * associated with the same tunnel instance.
  *
  * @param t tunnel to be destroyed. No longer useable thereafter.
  *
@@ -100,17 +99,13 @@ void teredo_destroy (teredo_tunnel *t);
  * (with the the teredo_set_*() functions); otherwise, incoming Teredo packets
  * would not be processed.
  *
- * It is safe to call teredo_run_async multiple times for the same tunnel,
- * however all call will fail (safe) after the first succesful one.
- *
- * Thread-safety: teredo_run_async() is not re-entrant. Calling it from
- * multiple threads with the same teredo_tunnel objet simultanously is
- * undefined. It is safe to call teredo_run_async() from different threads
- * each with a different teredo_tunnel instance.
+ * @note This function can safely be called multiple times; any extra
+ * invocation will have no effects. All calls for the same tunnnel must be
+ * serialized.
  *
  * @param t Teredo tunnel instance
  *
- * @return 0 on success, -1 on error.
+ * @return 0 on success, -1 on error or if the tunnel is already running.
  */
 int teredo_run_async (teredo_tunnel *t);
 
@@ -118,7 +113,8 @@ int teredo_run_async (teredo_tunnel *t);
  * Defines the cone flag of the Teredo tunnel.
  * This only works for Teredo relays.
  *
- * Thread-safety: This function is thread-safe.
+ * @warning This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
  *
  * @param t Teredo tunnel instance
  * @param flag true to disable sending of direct Teredo bubble,
@@ -132,7 +128,8 @@ int teredo_set_cone_flag (teredo_tunnel *t, bool flag);
 /**
  * Enables Teredo relay mode (this is the default).
  *
- * Thread-safety: This function is thread-safe.
+ * @warning This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
  *
  * @param t Teredo tunnel instance
  *
@@ -144,11 +141,11 @@ int teredo_set_relay_mode (teredo_tunnel *t);
  * Enables Teredo client mode for a teredo_tunnel and starts the Teredo
  * client maintenance procedure in a separate thread.
  *
- * NOTE: calling teredo_set_client_mode() multiple times on the same tunnel
- * is currently not supported, and will safely return an error. Future
- * versions might support this.
+ * @note This function will return an error (and have no further effects)
+ * if the same tunnel is already in client mode.
  *
- * Thread-safety: This function is thread-safe.
+ * @warning This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
  *
  * @param t Teredo tunnel instance
  * @param s1 Teredo server's host name or “dotted quad” primary IPv4 address.

@@ -1158,93 +1158,68 @@ int teredo_run_async (teredo_tunnel *t)
 int teredo_set_cone_flag (teredo_tunnel *t, bool cone)
 {
 	assert (t != NULL);
-
-	int retval = 0;
-
-	pthread_rwlock_wrlock (&t->state_lock);
-
 #ifdef MIREDO_TEREDO_CLIENT
 	if (t->maintenance != NULL)
-		retval = -1;
-	else
+		return -1;
 #endif
+
 	if (cone)
 		t->state.addr.teredo.flags |= htons (TEREDO_FLAG_CONE);
 	else
 		t->state.addr.teredo.flags &= ~htons (TEREDO_FLAG_CONE);
-
-	pthread_rwlock_unlock (&t->state_lock);
-
-	return retval;
+	return 0;
 }
 
 
 int teredo_set_relay_mode (teredo_tunnel *t)
 {
-	int retval;
-
 #ifdef MIREDO_TEREDO_CLIENT
-	pthread_rwlock_wrlock (&t->state_lock);
-	retval = (t->maintenance != NULL) ? -1 : 0;
-	pthread_rwlock_unlock (&t->state_lock);
-#else
-	(void)t;
-	retval = 0;
+	if (t->maintenance != NULL)
+		return -1;
 #endif
-
-	return retval;
+	return 0;
 }
 
 
 int teredo_set_client_mode (teredo_tunnel *restrict t,
                             const char *s, const char *s2)
 {
-#ifdef MIREDO_TEREDO_CLIENT
 	assert (t != NULL);
-
-	pthread_rwlock_wrlock (&t->state_lock);
+#ifdef MIREDO_TEREDO_CLIENT
 	if (t->maintenance != NULL)
-	{
-		pthread_rwlock_unlock (&t->state_lock);
 		return -1;
-	}
 
 	/* expand the list's expiration time to handle local peers */
 	teredo_peerlist *newlist = teredo_list_create (MAX_PEERS, 600);
 	if (newlist == NULL)
 	{
 		debug ("Could not create new list for client mode.");
-		pthread_rwlock_unlock (&t->state_lock);
 		return -1;
 	}
 	teredo_list_destroy (t->list);
 	t->list = newlist;
 
-	struct teredo_maintenance *m;
-	m = teredo_maintenance_create (t->fd, teredo_state_change, t, s, s2,
-	                               0, 0, 0, 0);
-	t->maintenance = m;
-	pthread_rwlock_unlock (&t->state_lock);
-
-	if (m != NULL)
-		return 0;
+	t->maintenance = teredo_maintenance_create (t->fd, teredo_state_change,
+	                                            t, s, s2, 0, 0, 0, 0);
+	return (t->maintenance != NULL) ? 0 : -1;
 #else
 	(void)t;
 	(void)s;
 	(void)s2;
-#endif
 	return -1;
+#endif
 }
 
 
 int teredo_set_discovery_params (teredo_tunnel *restrict t,
                                  const teredo_discovery_params *p)
 {
+	assert (t != NULL);
 #ifdef MIREDO_TEREDO_CLIENT
-	pthread_rwlock_wrlock (&t->state_lock);
-	assert (t != NULL && IsClient(t));
+	if (!IsClient(t))
+		return -1;
+
 	t->disc_params = p;
-	pthread_rwlock_unlock (&t->state_lock);
 	return 0;
 #else
 	(void)t;
