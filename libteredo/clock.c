@@ -110,7 +110,7 @@ unsigned long teredo_clock (void)
 		ts.tv_sec = ctx->value;
 	else
 	{
-		ctx->fresh = true;
+		ctx->fresh = ctx->refs != 0;
 
 		clock_gettime (id, &ts);
 		ctx->value = ts.tv_sec;
