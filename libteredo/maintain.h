@@ -56,7 +56,7 @@ typedef struct teredo_maintenance teredo_maintenance;
 typedef void (*teredo_state_cb) (const struct teredo_state *s, void *opaque);
 
 /**
- * Creates and starts a Teredo client maintenance procedure thread.
+ * Creates a Teredo client maintenance procedure instance.
  *
  * @param fd socket to send router solicitation with
  * @param cb status change notification callback
@@ -71,19 +71,21 @@ typedef void (*teredo_state_cb) (const struct teredo_state *s, void *opaque);
  * @return NULL on error.
  */
 teredo_maintenance *
-teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
-                          const char *s1, const char *s2,
-                          unsigned q_sec, unsigned q_retries,
-                          unsigned refresh_sec, unsigned restart_sec);
+teredo_maintenance_create (int fd, teredo_state_cb cb, void *opaque,
+                           const char *s1, const char *s2,
+                           unsigned q_sec, unsigned q_retries,
+                           unsigned refresh_sec, unsigned restart_sec);
+
+int teredo_maintenance_start (teredo_maintenance *m);
 
 /**
- * Stops and destroys a maintenance thread created by
- * teredo_maintenance_start()
+ * Stops a maintenance thread started by teredo_maintenance_start()
  *
  * @param m non-NULL pointer from teredo_maintenance_start()
  */
 void teredo_maintenance_stop (teredo_maintenance *m);
 
+void teredo_maintenance_destroy (teredo_maintenance *m);
 
 /**
  * Passes a Teredo packet to a maintenance thread for processing.

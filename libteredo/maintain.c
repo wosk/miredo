@@ -359,10 +359,10 @@ static const unsigned RefreshDelay = 30; // seconds
 static const unsigned RestartDelay = 100; // seconds
 
 teredo_maintenance *
-teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
-                          const char *s1, const char *s2,
-                          unsigned q_sec, unsigned q_retries,
-                          unsigned refresh_sec, unsigned restart_sec)
+teredo_maintenance_create (int fd, teredo_state_cb cb, void *opaque,
+                           const char *s1, const char *s2,
+                           unsigned q_sec, unsigned q_retries,
+                           unsigned refresh_sec, unsigned restart_sec)
 {
 	teredo_maintenance *m = malloc (sizeof (*m));
 
@@ -401,28 +401,29 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
 	}
 
 	pthread_mutex_init (&m->lock, NULL);
-
-	int err = pthread_create (&m->thread, NULL, do_maintenance, m);
-	if (err == 0)
-		return m;
-
-	errno = err;
-	syslog (LOG_ALERT, _("Error (%s): %m"), "pthread_create");
-
-	pthread_cond_destroy (&m->received);
-	pthread_mutex_destroy (&m->lock);
-
-	free (m->server);
-	free (m);
-	return NULL;
+	return m;
 }
 
+int teredo_maintenance_start (teredo_maintenance *m)
+{
+	int err = pthread_create (&m->thread, NULL, do_maintenance, m);
+	if (err != 0)
+	{
+		errno = err;
+		syslog (LOG_ALERT, _("Error (%s): %m"), "pthread_create");
+		return -1;
+	}
+	return 0;
+}
 
 void teredo_maintenance_stop (teredo_maintenance *m)
 {
 	pthread_cancel (m->thread);
 	pthread_join (m->thread, NULL);
+}
 
+void teredo_maintenance_destroy (teredo_maintenance *m)
+{
 	pthread_cond_destroy (&m->received);
 	pthread_mutex_destroy (&m->lock);
 

@@ -1082,20 +1082,21 @@ void teredo_destroy (teredo_tunnel *t)
 	assert (t->fd != -1);
 	assert (t->list != NULL);
 
+	if (t->recv != NULL)
+	{
+		teredo_thread_stop (t->recv);
 #ifdef MIREDO_TEREDO_CLIENT
-	/* NOTE: We must NOT lock the state r/w lock here,
-	 * to avoid a potential deadlock, if the state callback is called by the
-	 * maintenance thread. Anyway, if the user obey the specified constraints,
-	 * we need not lock anyting in teredo_destroy(). */
-	if (t->maintenance != NULL)
-		teredo_maintenance_stop (t->maintenance);
+		if (t->maintenance != NULL)
+			teredo_maintenance_stop (t->maintenance);
+#endif
+	}
 
+#ifdef MIREDO_TEREDO_CLIENT
 	if (t->discovery != NULL)
 		teredo_discovery_stop (t->discovery);
+	if (t->maintenance != NULL)
+		teredo_maintenance_destroy (t->maintenance);
 #endif
-
-	if (t->recv != NULL)
-		teredo_thread_stop (t->recv);
 
 	teredo_list_destroy (t->list);
 	pthread_rwlock_destroy (&t->state_lock);
@@ -1142,7 +1143,14 @@ int teredo_run_async (teredo_tunnel *t)
 	t->recv = teredo_thread_start (teredo_recv_thread, t);
 	if (t->recv == NULL)
 		return -1;
-
+#ifdef MIREDO_TEREDO_CLIENT
+	if (t->maintenance != NULL
+	 && teredo_maintenance_start (t->maintenance))
+	{
+		teredo_thread_stop (t->recv);
+		return -1;
+	}
+#endif
 	return 0;
 }
 
@@ -1213,8 +1221,8 @@ int teredo_set_client_mode (teredo_tunnel *restrict t,
 	t->list = newlist;
 
 	struct teredo_maintenance *m;
-	m = teredo_maintenance_start (t->fd, teredo_state_change, t, s, s2,
-	                              0, 0, 0, 0);
+	m = teredo_maintenance_create (t->fd, teredo_state_change, t, s, s2,
+	                               0, 0, 0, 0);
 	t->maintenance = m;
 	pthread_rwlock_unlock (&t->state_lock);
 
