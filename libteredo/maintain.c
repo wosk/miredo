@@ -72,8 +72,7 @@ static inline void gettime (struct timespec *now)
 struct teredo_maintenance
 {
 	pthread_t thread;
-	pthread_mutex_t outer;
-	pthread_mutex_t inner;
+	pthread_mutex_t lock;
 	pthread_cond_t received;
 	pthread_cond_t processed;
 
@@ -161,7 +160,7 @@ static int wait_reply (teredo_maintenance *restrict m,
 {
 	while (m->incoming == NULL)
 	{
-		switch (pthread_cond_timedwait (&m->received, &m->inner, deadline))
+		switch (pthread_cond_timedwait (&m->received, &m->lock, deadline))
 		{
 			case 0:
 				break;
@@ -247,12 +246,12 @@ void maintenance_thread (teredo_maintenance *m)
 		TERR_BLACKHOLE
 	} last_error = TERR_NONE;
 
-	pthread_mutex_lock (&m->inner);
+	pthread_mutex_lock (&m->lock);
 
 	/*
 	 * Qualification/maintenance procedure
 	 */
-	pthread_cleanup_push (cleanup_unlock, &m->inner);
+	pthread_cleanup_push (cleanup_unlock, &m->lock);
 	for (;;)
 	{
 		/* Resolve server IPv4 addresses */
@@ -451,8 +450,7 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
 	}
 
 	pthread_cond_init (&m->processed, NULL);
-	pthread_mutex_init (&m->outer, NULL);
-	pthread_mutex_init (&m->inner, NULL);
+	pthread_mutex_init (&m->lock, NULL);
 
 	int err = pthread_create (&m->thread, NULL, do_maintenance, m);
 	if (err == 0)
@@ -463,8 +461,7 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
 
 	pthread_cond_destroy (&m->processed);
 	pthread_cond_destroy (&m->received);
-	pthread_mutex_destroy (&m->outer);
-	pthread_mutex_destroy (&m->inner);
+	pthread_mutex_destroy (&m->lock);
 
 	free (m->server);
 	free (m);
@@ -479,8 +476,7 @@ void teredo_maintenance_stop (teredo_maintenance *m)
 
 	pthread_cond_destroy (&m->processed);
 	pthread_cond_destroy (&m->received);
-	pthread_mutex_destroy (&m->inner);
-	pthread_mutex_destroy (&m->outer);
+	pthread_mutex_destroy (&m->lock);
 
 	free (m->server);
 	free (m);
@@ -503,19 +499,17 @@ int teredo_maintenance_process (teredo_maintenance *restrict m,
 	 || !IN6_ARE_ADDR_EQUAL (&packet->ip6->ip6_dst, &teredo_restrict))
 		return -1;
 
-	pthread_mutex_lock (&m->outer);
-	pthread_mutex_lock (&m->inner);
+	pthread_mutex_lock (&m->lock);
 
 	m->incoming = packet;
 	pthread_cond_signal (&m->received);
 
 	/* Waits for maintenance thread to process packet... */
 	do
-		pthread_cond_wait (&m->processed, &m->inner);
+		pthread_cond_wait (&m->processed, &m->lock);
 	while (m->incoming != NULL);
 
-	pthread_mutex_unlock (&m->inner);
-	pthread_mutex_unlock (&m->outer);
+	pthread_mutex_unlock (&m->lock);
 
 	return 0;
 }
