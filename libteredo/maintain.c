@@ -60,9 +60,6 @@ struct teredo_maintenance
 	pthread_t thread;
 	pthread_mutex_t lock;
 	pthread_cond_t received;
-	pthread_cond_t processed;
-
-	const teredo_packet *incoming;
 
 	int fd;
 	struct
@@ -72,6 +69,9 @@ struct teredo_maintenance
 		void *opaque;
 	} state;
 	char *server;
+
+	uint32_t server_ip;
+	unsigned char nonce[8];
 
 	unsigned qualification_delay;
 	unsigned qualification_retries;
@@ -109,15 +109,24 @@ static int getipv4byname (const char *restrict name, uint32_t *restrict ipv4)
  *
  * @return 0 if successful.
  */
-static int
-maintenance_recv (const teredo_packet *restrict packet, uint32_t server_ip,
-                  const uint8_t *restrict nonce, bool cone,
-                  teredo_state *restrict state)
+int teredo_maintenance_process (teredo_maintenance *restrict m,
+                                const teredo_packet *restrict packet)
 {
-	assert (packet->auth_present);
+	teredo_state state;
+	int ret = 0;
 
-	if (memcmp (packet->auth_nonce, nonce, 8))
-		return EPERM;
+	state.mtu = 1280;
+	state.up = true;
+
+	/*
+	 * We don't accept router advertisement without nonce.
+	 * It is far too easy to spoof such packets.
+	 */
+	if ((packet->source_port != htons (IPPORT_TEREDO))
+	    /* TODO: check for primary or secondary server address */
+	 || !packet->auth_present
+	 || !IN6_ARE_ADDR_EQUAL (&packet->ip6->ip6_dst, &teredo_restrict))
+		return EINVAL;
 
 	/* TODO: fail instead of ignoring the packet? */
 	if (packet->auth_fail)
@@ -126,50 +135,25 @@ maintenance_recv (const teredo_packet *restrict packet, uint32_t server_ip,
 		return EACCES;
 	}
 
-	if (teredo_parse_ra (packet, &state->addr, cone, &state->mtu)
+	pthread_mutex_lock(&m->lock);
+	if (m->state.state.up /* Already up, not expecting message */
+	 || m->server_ip == 0 /* Server not resolved yet */
+	 || memcmp (packet->auth_nonce, m->nonce, 8) /* Nonce mismatch */)
+		ret = EPERM;
+	else
+	if (teredo_parse_ra (packet, &state.addr, false /*cone*/, &state.mtu)
 	/* TODO: try to work-around incorrect server IP */
-	 || (state->addr.teredo.server_ip != server_ip))
-		return EINVAL;
+	 || state.addr.teredo.server_ip != m->server_ip)
+		ret = EINVAL;
+	else
+	{	/* Valid router advertisement received! */
+		state.ipv4 = packet->dest_ipv4;
 
-	/* Valid router advertisement received! */
-	state->ipv4 = packet->dest_ipv4;
-	return 0;
-}
-
-
-/**
- * Waits until the clock reaches deadline or a RS packet is received.
- * @return 0 if a packet was received, ETIMEDOUT if deadline was reached.
- */
-static int wait_reply (teredo_maintenance *restrict m,
-                       const struct timespec *restrict deadline)
-{
-	while (m->incoming == NULL)
-	{
-		switch (pthread_cond_timedwait (&m->received, &m->lock, deadline))
-		{
-			case 0:
-				break;
-			case ETIMEDOUT:
-				return ETIMEDOUT;
-		}
+		m->state.state = state;
+		pthread_cond_signal(&m->received);
 	}
-	return 0; // dead code
-}
-
-
-/**
- * Waits until the clock reaches deadline and ignore any RS packet received
- * in the mean time.
- */
-static void wait_reply_ignore (teredo_maintenance *restrict m,
-                               const struct timespec *restrict deadline)
-{
-	while (wait_reply (m, deadline) == 0)
-	{
-		m->incoming = NULL;
-		pthread_cond_signal (&m->processed);
-	}
+	pthread_mutex_unlock(&m->lock);
+	return ret;
 }
 
 
@@ -186,19 +170,12 @@ checkTimeDrift (struct timespec *ts)
 	if ((now.tv_sec > ts->tv_sec)
 	 || ((now.tv_sec == ts->tv_sec) && (now.tv_nsec > ts->tv_nsec)))
 	{
-		/* process stopped, CPU starved, or (ACPI, APM, etc) suspend */
+		/* process stopped, CPU starved or system suspended */
 		syslog (LOG_WARNING, _("Too much time drift. Resynchronizing."));
 		*ts = now;
 		return false;
 	}
 	return true;
-}
-
-
-static void
-cleanup_unlock (void *o)
-{
-	(void)pthread_mutex_unlock ((pthread_mutex_t *)o);
 }
 
 
@@ -223,31 +200,30 @@ static inline LIBTEREDO_NORETURN
 void maintenance_thread (teredo_maintenance *m)
 {
 	struct timespec deadline = { 0, 0 };
-	teredo_state *c_state = &m->state.state;
-	uint32_t server_ip = 0;
-	unsigned count = 0;
+	unsigned retries = 0;
 	enum
 	{
 		TERR_NONE,
 		TERR_BLACKHOLE
 	} last_error = TERR_NONE;
 
-	pthread_mutex_lock (&m->lock);
-
 	/*
 	 * Qualification/maintenance procedure
 	 */
-	pthread_cleanup_push (cleanup_unlock, &m->lock);
 	for (;;)
 	{
+		int canc;
+		uint32_t server_ip = m->server_ip;
+
 		/* Resolve server IPv4 addresses */
 		while (server_ip == 0)
 		{
-			/* FIXME: mutex kept while resolving - very bad */
 			int val = getipv4byname (m->server, &server_ip);
 			teredo_gettime (&deadline);
-	
-			if (val)
+
+			pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &canc);
+
+			if (val != 0)
 			{
 				/* DNS resolution failed */
 				syslog (LOG_ERR,
@@ -259,21 +235,25 @@ void maintenance_thread (teredo_maintenance *m)
 			{
 				syslog (LOG_ERR,
 				        _("Teredo server has a non global IPv4 address."));
+				server_ip = 0;
 			}
 			else
 			{
 				/* DNS resolution succeeded */
 				/* Tells Teredo client about the new server's IP */
-				assert (!c_state->up);
-				c_state->addr.teredo.server_ip = server_ip;
-				m->state.cb (c_state, m->state.opaque);
-				break; /* Done! */
+				assert (!m->state.state.up);
+				m->state.state.addr.teredo.server_ip = m->server_ip;
+				m->state.cb (&m->state.state, m->state.opaque);
 			}
+
+			pthread_setcancelstate (canc, NULL);
+
+			if (server_ip != 0)
+				break;
 
 			/* wait some time before next resolution attempt */
 			deadline.tv_sec += m->restart_delay;
-			server_ip = 0;
-			wait_reply_ignore (m, &deadline);
+			teredo_wait (&deadline);
 		}
 
 		/* SEND ROUTER SOLICATION */
@@ -281,42 +261,54 @@ void maintenance_thread (teredo_maintenance *m)
 			deadline.tv_sec += m->qualification_delay;
 		while (!checkTimeDrift (&deadline));
 
-		uint8_t nonce[8];
-		teredo_get_nonce (deadline.tv_sec, server_ip, htons (IPPORT_TEREDO),
-		                  nonce);
-		teredo_send_rs (m->fd, server_ip, nonce, false);
+		teredo_state *state = &m->state.state, ostate;
 
-		int val = 0;
-		teredo_state newst;
-		newst.mtu = 1280;
-		newst.up = true;
+		pthread_mutex_lock(&m->lock);
+		teredo_get_nonce (deadline.tv_sec, server_ip, htons (IPPORT_TEREDO),
+		                  m->nonce);
+		teredo_send_rs (m->fd, server_ip, m->nonce, false);
+		m->server_ip = server_ip;
+		ostate = *state;
 
 		/* RECEIVE ROUTER ADVERTISEMENT */
-		do
-		{
-			val = wait_reply (m, &deadline);
-			if (val)
-				continue; // time out
-
-			/* check received packet */
-			val = maintenance_recv (m->incoming, server_ip,
-			                        nonce, false, &newst);
-			m->incoming = NULL;
-			pthread_cond_signal (&m->processed);
-		}
-		while ((val != 0) && (val != ETIMEDOUT));
+		state->up = false;
+		while (pthread_cond_timedwait (&m->received, &m->lock, &deadline) == 0
+		    && !state->up);
 
 		unsigned delay = 0;
 
-		/* UPDATE FINITE STATE MACHINE */
-		if (val /* == ETIMEDOUT */)
-		{
-			/* no response */
-			count++;
+		pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &canc);
 
-			if (count >= m->qualification_retries)
+		/* UPDATE FINITE STATE MACHINE */
+		if (state->up)
+		{	/* Router Advertisement received and parsed succesfully */
+			retries = 0;
+
+			/* 12-bits Teredo flags randomization */
+			state->addr.teredo.flags = ostate.addr.teredo.flags;
+			if (!IN6_ARE_ADDR_EQUAL (&state->addr.ip6, &ostate.addr.ip6))
 			{
-				count = 0;
+				uint16_t f = teredo_get_flbits (deadline.tv_sec);
+				state->addr.teredo.flags = f & htons (TEREDO_RANDOM_MASK);
+			}
+
+			if (!ostate.up
+			 || !IN6_ARE_ADDR_EQUAL (&ostate.addr.ip6, &state->addr.ip6)
+			 || ostate.mtu != state->mtu)
+			{
+				syslog (LOG_NOTICE, _("New Teredo address/MTU"));
+				m->state.cb (state, m->state.opaque);
+			}
+
+			/* Success: schedule next NAT binding maintenance */
+			last_error = TERR_NONE;
+			delay = m->refresh_delay;
+		}
+		else
+		{	/* No response */
+			if (++retries >= m->qualification_retries)
+			{
+				retries = 0;
 
 				/* No response from server */
 				if (last_error != TERR_BLACKHOLE)
@@ -325,46 +317,20 @@ void maintenance_thread (teredo_maintenance *m)
 					last_error = TERR_BLACKHOLE;
 				}
 
-				if (c_state->up)
+				if (ostate.up)
 				{
 					syslog (LOG_NOTICE, _("Lost Teredo connectivity"));
-					c_state->up = false;
-					m->state.cb (c_state, m->state.opaque);
-					server_ip = 0;
+					m->state.cb (state, m->state.opaque);
+					m->server_ip = 0;
 				}
 
 				/* Wait some time before retrying */
 				delay = m->restart_delay;
 			}
 		}
-		else
-		/* RA received and parsed succesfully */
-		{
-			count = 0;
 
-			/* 12-bits Teredo flags randomization */
-			newst.addr.teredo.flags = c_state->addr.teredo.flags;
-			if (!IN6_ARE_ADDR_EQUAL (&c_state->addr.ip6, &newst.addr.ip6))
-			{
-				uint16_t f = teredo_get_flbits (deadline.tv_sec);
-				newst.addr.teredo.flags =
-					f & htons (TEREDO_RANDOM_MASK);
-			}
-
-			if ((!c_state->up)
-			 || !IN6_ARE_ADDR_EQUAL (&c_state->addr.ip6, &newst.addr.ip6)
-			 || (c_state->mtu != newst.mtu))
-			{
-				memcpy(c_state, &newst, sizeof (*c_state));
-
-				syslog (LOG_NOTICE, _("New Teredo address/MTU"));
-				m->state.cb (c_state, m->state.opaque);
-			}
-
-			/* Success: schedule next NAT binding maintenance */
-			last_error = TERR_NONE;
-			delay = m->refresh_delay;
-		}
+		pthread_setcancelstate (canc, NULL);
+		pthread_mutex_unlock (&m->lock);
 
 		/* WAIT UNTIL NEXT SOLICITATION */
 		/* TODO: watch for new interface events
@@ -373,11 +339,10 @@ void maintenance_thread (teredo_maintenance *m)
 		{
 			deadline.tv_sec -= m->qualification_delay;
 			deadline.tv_sec += delay;
-			wait_reply_ignore (m, &deadline);
+			teredo_wait (&deadline);
 		}
 	}
 	/* dead code */
-	pthread_cleanup_pop (1);
 }
 
 
@@ -435,7 +400,6 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
 		pthread_condattr_destroy (&attr);
 	}
 
-	pthread_cond_init (&m->processed, NULL);
 	pthread_mutex_init (&m->lock, NULL);
 
 	int err = pthread_create (&m->thread, NULL, do_maintenance, m);
@@ -445,7 +409,6 @@ teredo_maintenance_start (int fd, teredo_state_cb cb, void *opaque,
 	errno = err;
 	syslog (LOG_ALERT, _("Error (%s): %m"), "pthread_create");
 
-	pthread_cond_destroy (&m->processed);
 	pthread_cond_destroy (&m->received);
 	pthread_mutex_destroy (&m->lock);
 
@@ -460,42 +423,9 @@ void teredo_maintenance_stop (teredo_maintenance *m)
 	pthread_cancel (m->thread);
 	pthread_join (m->thread, NULL);
 
-	pthread_cond_destroy (&m->processed);
 	pthread_cond_destroy (&m->received);
 	pthread_mutex_destroy (&m->lock);
 
 	free (m->server);
 	free (m);
-}
-
-
-int teredo_maintenance_process (teredo_maintenance *restrict m,
-                                const teredo_packet *restrict packet)
-{
-	assert (m != NULL);
-	assert (packet != NULL);
-
-	/*
-	 * We don't accept router advertisement without nonce.
-	 * It is far too easy to spoof such packets.
-	 */
-	if ((packet->source_port != htons (IPPORT_TEREDO))
-	    /* TODO: check for primary or secondary server address */
-	 || !packet->auth_present
-	 || !IN6_ARE_ADDR_EQUAL (&packet->ip6->ip6_dst, &teredo_restrict))
-		return -1;
-
-	pthread_mutex_lock (&m->lock);
-
-	m->incoming = packet;
-	pthread_cond_signal (&m->received);
-
-	/* Waits for maintenance thread to process packet... */
-	do
-		pthread_cond_wait (&m->processed, &m->lock);
-	while (m->incoming != NULL);
-
-	pthread_mutex_unlock (&m->lock);
-
-	return 0;
 }
