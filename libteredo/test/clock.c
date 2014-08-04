@@ -25,18 +25,19 @@
 
 #undef NDEBUG
 #include <assert.h>
-#include <sched.h>
 
+#include <time.h>
 #include "clock.h"
 
 int main (void)
 {
+	const struct timespec delay = { 0, 100000000 };
 	teredo_clock_t start = teredo_clock (), now;
 
 	do
 	{
 		now = teredo_clock ();
-		sched_yield ();
+		clock_nanosleep(CLOCK_REALTIME, 0, &delay, NULL);
 	}
 	while (now == start);
 
