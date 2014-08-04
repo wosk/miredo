@@ -1025,6 +1025,7 @@ static void teredo_dummy_state_down_cb (void *o)
 teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port)
 {
 	bindtextdomain (PACKAGE_NAME, LOCALEDIR);
+	teredo_clock_init ();
 
 	if (teredo_init_HMAC ())
 		return NULL;
@@ -1064,7 +1065,6 @@ teredo_tunnel *teredo_create (uint32_t ipv4, uint16_t port)
 		{
 			(void)pthread_rwlock_init (&tunnel->state_lock, NULL);
 			(void)pthread_mutex_init (&tunnel->ratelimit.lock, NULL);
-			teredo_clock_init ();
 			return tunnel;
 		}
 		teredo_close (tunnel->fd);
