@@ -36,32 +36,31 @@
 #include "clock.h"
 #include "debug.h"
 
-static clockid_t clock_id;
+static clockid_t coarse_clock_id; /* Coarse clock */
+clockid_t teredo_clock_id; /* Precise clock */
 
 static void teredo_clock_select (void)
 {
+#if (_POSIX_MONOTONIC_CLOCK > 0)
+	teredo_clock_id = CLOCK_MONOTONIC;
+#elif (_POSIX_MONOTONIC_CLOCK == 0)
+	/* Run-time POSIX monotonic clock detection */
+	if (sysconf (_SC_MONOTONIC_CLOCK) > 0)
+		teredo_clock_id = CLOCK_MONOTONIC;
+	else
+		teredo_clock_id = CLOCK_REALTIME;
+#else
+	teredo_clock_id = CLOCK_REALTIME;
+#endif
+	coarse_clock_id = teredo_clock_id;
+
 #ifdef CLOCK_MONOTONIC_COARSE
 	struct timespec coarseness;
 
 	if (clock_getres(CLOCK_MONOTONIC_COARSE, &coarseness) == 0
 	 && (coarseness.tv_sec <= 0
 	  || (coarseness.tv_sec == 1 && coarseness.tv_nsec == 0)))
-	{
-		clock_id = CLOCK_MONOTONIC_COARSE;
-		return;
-	}
-#endif
-
-#if (_POSIX_MONOTONIC_CLOCK > 0)
-	clock_id = CLOCK_MONOTONIC;
-#elif (_POSIX_MONOTONIC_CLOCK == 0)
-	/* Run-time POSIX monotonic clock detection */
-	if (sysconf (_SC_MONOTONIC_CLOCK) > 0)
-		clock_id = CLOCK_MONOTONIC;
-	else
-		clock_id = CLOCK_REALTIME;
-#else
-	clock_id = CLOCK_REALTIME;
+		coarse_clock_id = CLOCK_MONOTONIC_COARSE;
 #endif
 }
 
@@ -69,7 +68,7 @@ unsigned long teredo_clock (void)
 {
 	struct timespec ts;
 
-	clock_gettime (clock_id, &ts);
+	clock_gettime (coarse_clock_id, &ts);
 	return ts.tv_sec;
 }
 

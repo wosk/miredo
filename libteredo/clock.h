@@ -43,4 +43,25 @@ teredo_clock_t teredo_clock (void);
 
 void teredo_clock_init (void);
 
+# include <time.h>
+
+extern clockid_t teredo_clock_id;
+
+static inline void teredo_gettime (struct timespec *now)
+{
+	clock_gettime (teredo_clock_id, now);
+}
+
+static inline void teredo_wait (const struct timespec *dl)
+{
+	while (clock_nanosleep (teredo_clock_id, TIMER_ABSTIME, dl, NULL));
+}
+
+static inline void teredo_sleep (const struct timespec *d)
+{
+	struct timespec duration = *d;
+
+	while (clock_nanosleep (teredo_clock_id, 0, &duration, &duration));
+}
+
 #endif /* ifndef LIBTEREDO_CLOCK_H */
