@@ -45,8 +45,6 @@
 #include <stdlib.h> /* malloc(), free() */
 #include <errno.h> /* EINTR */
 #include <pthread.h>
-#include <arpa/nameser.h>
-#include <resolv.h> /* res_init() */
 
 #include "teredo.h"
 #include "teredo-udp.h"
