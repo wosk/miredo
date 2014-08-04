@@ -1097,7 +1097,6 @@ void teredo_destroy (teredo_tunnel *t)
 	if (t->recv != NULL)
 		teredo_thread_stop (t->recv);
 
-	teredo_clock_deinit ();
 	teredo_list_destroy (t->list);
 	pthread_rwlock_destroy (&t->state_lock);
 	pthread_mutex_destroy (&t->ratelimit.lock);

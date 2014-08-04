@@ -42,6 +42,5 @@ typedef unsigned long teredo_clock_t;
 teredo_clock_t teredo_clock (void);
 
 void teredo_clock_init (void);
-void teredo_clock_deinit (void);
 
 #endif /* ifndef LIBTEREDO_CLOCK_H */

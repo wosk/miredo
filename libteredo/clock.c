@@ -36,126 +36,34 @@
 #include "clock.h"
 #include "debug.h"
 
-typedef struct
-{
-	time_t            value;
-#if (_POSIX_MONOTONIC_CLOCK == 0)
-	clockid_t         id;
-#endif
-	bool              fresh;
+static clockid_t clock_id;
 
-	uintptr_t         refs;
-	pthread_mutex_t   lock;
-	pthread_cond_t    wait;
-	pthread_t         thread;
-} teredo_clockdata_t;
-
-static void cleanup_unlock (void *mutex)
-{
-	pthread_mutex_unlock (mutex);
-}
-
-static inline clockid_t teredo_clock_id(teredo_clockdata_t *ctx)
+static void teredo_clock_select (void)
 {
 #if (_POSIX_MONOTONIC_CLOCK > 0)
-	(void) ctx;
-	return CLOCK_MONOTONIC;
+	clock_id = CLOCK_MONOTONIC;
 #elif (_POSIX_MONOTONIC_CLOCK == 0)
-	return ctx->id;
+	/* Run-time POSIX monotonic clock detection */
+	if (sysconf (_SC_MONOTONIC_CLOCK) > 0)
+		clock_id = CLOCK_MONOTONIC;
+	else
+		clock_id = CLOCK_REALTIME;
 #else
-	(void) ctx;
-	return CLOCK_REALTIME;
+	clock_id = CLOCK_REALTIME;
 #endif
 }
-
-static LIBTEREDO_NORETURN void *teredo_clock_thread (void *data)
-{
-	teredo_clockdata_t *ctx = data;
-	clockid_t id = teredo_clock_id (ctx);
-	struct timespec ts = { 0, 0 };
-
-	pthread_mutex_lock (&ctx->lock);
-	for (;;)
-	{
-		pthread_cleanup_push (cleanup_unlock, &ctx->lock);
-		while (!ctx->fresh)
-			pthread_cond_wait (&ctx->wait, &ctx->lock);
-
-		ts.tv_sec = ctx->value + 1;
-		pthread_cleanup_pop (1);
-
-		while (clock_nanosleep (id, TIMER_ABSTIME, &ts, &ts));
-
-		pthread_mutex_lock (&ctx->lock);
-		ctx->fresh = false;
-	}
-}
-
-static teredo_clockdata_t instance =
-{
-	.fresh = false,
-	.refs = 0,
-	.lock = PTHREAD_MUTEX_INITIALIZER,
-	.wait = PTHREAD_COND_INITIALIZER,
-};
 
 unsigned long teredo_clock (void)
 {
-	teredo_clockdata_t *ctx = &instance;
-	clockid_t id = teredo_clock_id (ctx);
 	struct timespec ts;
 
-	pthread_mutex_lock (&ctx->lock);
-	if (ctx->fresh)
-		ts.tv_sec = ctx->value;
-	else
-	{
-		ctx->fresh = ctx->refs != 0;
-
-		clock_gettime (id, &ts);
-		ctx->value = ts.tv_sec;
-
-		pthread_cond_signal (&ctx->wait);
-	}
-	pthread_mutex_unlock (&ctx->lock);
-
+	clock_gettime (clock_id, &ts);
 	return ts.tv_sec;
 }
 
 void teredo_clock_init (void)
 {
-	teredo_clockdata_t *ctx = &instance;
+	static pthread_once_t once = PTHREAD_ONCE_INIT;
 
-	pthread_mutex_lock (&ctx->lock);
-	if (ctx->refs == 0)
-	{
-#if (_POSIX_MONOTONIC_CLOCK == 0)
-		/* Run-time POSIX monotonic clock detection */
-		ctx->id = (sysconf (_SC_MONOTONIC_CLOCK) > 0) ? CLOCK_MONOTONIC
-		                                              : CLOCK_REALTIME;
-#endif
-
-		if (pthread_create (&ctx->thread, NULL,
-		                    teredo_clock_thread, ctx) == 0)
-			ctx->refs++;
-	}
-	else
-		ctx->refs++;
-	pthread_mutex_unlock (&ctx->lock);
-}
-
-void teredo_clock_deinit (void)
-{
-	teredo_clockdata_t *ctx = &instance;
-
-	pthread_mutex_lock (&ctx->lock);
-	if (ctx->refs > 0 && --ctx->refs > 0)
-		ctx = NULL;
-	pthread_mutex_unlock (&instance.lock);
-
-	if (ctx != NULL)
-	{
-		pthread_cancel (ctx->thread);
-		pthread_join (ctx->thread, NULL);
-	}
+	pthread_once(&once, teredo_clock_select);
 }
