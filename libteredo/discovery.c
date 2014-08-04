@@ -133,8 +133,9 @@ static LIBTEREDO_NORETURN void *teredo_mcast_thread (void *opaque)
 		SendDiscoveryBubble (d, fd);
 
 		int interval = 200 + teredo_get_flbits (teredo_clock ()) % 100;
+
 		struct timespec delay = { .tv_sec = interval };
-		while (clock_nanosleep (CLOCK_REALTIME, 0, &delay, &delay));
+		teredo_sleep (&delay);
 	}
 }
 
