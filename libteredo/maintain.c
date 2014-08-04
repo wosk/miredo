@@ -33,7 +33,6 @@
 
 #include <stdbool.h>
 #include <inttypes.h>
-#include <time.h> /* clock_gettime() */
 
 #include <sys/types.h>
 #include <unistd.h> /* sysconf() */
@@ -46,6 +45,7 @@
 #include <errno.h> /* EINTR */
 #include <pthread.h>
 
+#include "clock.h"
 #include "teredo.h"
 #include "teredo-udp.h"
 #include "packets.h"
@@ -54,18 +54,6 @@
 #include "maintain.h"
 #include "v4global.h" // is_ipv4_global_unicast()
 #include "debug.h"
-
-static inline void gettime (struct timespec *now)
-{
-#if (_POSIX_CLOCK_SELECTION > 0) && (_POSIX_MONOTONIC_CLOCK >= 0)
-	if (clock_gettime (CLOCK_MONOTONIC, now) == 0)
-		return;
-#else
-# warning Monotonic clock is needed for proper Teredo maintenance!
-#endif
-	clock_gettime (CLOCK_REALTIME, now);
-}
-
 
 struct teredo_maintenance
 {
@@ -193,7 +181,7 @@ static bool
 checkTimeDrift (struct timespec *ts)
 {
 	struct timespec now;
-	gettime (&now);
+	teredo_gettime (&now);
 
 	if ((now.tv_sec > ts->tv_sec)
 	 || ((now.tv_sec == ts->tv_sec) && (now.tv_nsec > ts->tv_nsec)))
@@ -257,7 +245,7 @@ void maintenance_thread (teredo_maintenance *m)
 		{
 			/* FIXME: mutex kept while resolving - very bad */
 			int val = getipv4byname (m->server, &server_ip);
-			gettime (&deadline);
+			teredo_gettime (&deadline);
 	
 			if (val)
 			{
