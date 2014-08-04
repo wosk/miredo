@@ -151,7 +151,7 @@ void teredo_clock_deinit (void)
 	pthread_mutex_lock (&ctx->lock);
 	if (ctx->refs > 0 && --ctx->refs > 0)
 		ctx = NULL;
-	pthread_mutex_unlock (&ctx->lock);
+	pthread_mutex_unlock (&instance.lock);
 
 	if (ctx != NULL)
 	{
