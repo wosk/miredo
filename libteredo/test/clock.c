@@ -31,17 +31,16 @@
 
 int main (void)
 {
-	const struct timespec delay = { 0, 100000000 };
-	teredo_clock_t start = teredo_clock (), now;
+	teredo_clock_init ();
 
-	do
+	for (teredo_clock_t start = teredo_clock (), now = start;
+		now < start;
+		now = teredo_clock ())
 	{
-		now = teredo_clock ();
+		const struct timespec delay = { 0, 100000000 };
+
 		clock_nanosleep(CLOCK_REALTIME, 0, &delay, NULL);
 	}
-	while (now == start);
-
-	assert (now > start);
 
 	return 0;
 }
