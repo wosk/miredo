@@ -55,16 +55,23 @@ static void cleanup_unlock (void *mutex)
 	pthread_mutex_unlock (mutex);
 }
 
+static inline clockid_t teredo_clock_id(teredo_clockdata_t *ctx)
+{
+#if (_POSIX_MONOTONIC_CLOCK > 0)
+	(void) ctx;
+	return CLOCK_MONOTONIC;
+#elif (_POSIX_MONOTONIC_CLOCK == 0)
+	return ctx->id;
+#else
+	(void) ctx;
+	return CLOCK_REALTIME;
+#endif
+}
+
 static LIBTEREDO_NORETURN void *teredo_clock_thread (void *data)
 {
 	teredo_clockdata_t *ctx = data;
-#if (_POSIX_MONOTONIC_CLOCK > 0)
-	const clockid_t id = CLOCK_MONOTONIC;
-#elif (_POSIX_MONOTONIC_CLOCK == 0)
-	const clockid_t id = ctx->id;
-#else
-	const clockid_t id = CLOCK_REALTIME;
-#endif
+	clockid_t id = teredo_clock_id (ctx);
 	struct timespec ts = { 0, 0 };
 
 	pthread_mutex_lock (&ctx->lock);
@@ -95,6 +102,7 @@ static teredo_clockdata_t instance =
 unsigned long teredo_clock (void)
 {
 	teredo_clockdata_t *ctx = &instance;
+	clockid_t id = teredo_clock_id (ctx);
 	struct timespec ts;
 
 	pthread_mutex_lock (&ctx->lock);
@@ -104,7 +112,7 @@ unsigned long teredo_clock (void)
 	{
 		ctx->fresh = true;
 
-		clock_gettime (ctx->id, &ts);
+		clock_gettime (id, &ts);
 		ctx->value = ts.tv_sec;
 
 		pthread_cond_signal (&ctx->wait);
