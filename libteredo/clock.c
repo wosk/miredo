@@ -40,6 +40,18 @@ static clockid_t clock_id;
 
 static void teredo_clock_select (void)
 {
+#ifdef CLOCK_MONOTONIC_COARSE
+	struct timespec coarseness;
+
+	if (clock_getres(CLOCK_MONOTONIC_COARSE, &coarseness) == 0
+	 && (coarseness.tv_sec <= 0
+	  || (coarseness.tv_sec == 1 && coarseness.tv_nsec == 0)))
+	{
+		clock_id = CLOCK_MONOTONIC_COARSE;
+		return;
+	}
+#endif
+
 #if (_POSIX_MONOTONIC_CLOCK > 0)
 	clock_id = CLOCK_MONOTONIC;
 #elif (_POSIX_MONOTONIC_CLOCK == 0)
