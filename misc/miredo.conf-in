@@ -25,5 +25,8 @@ ServerAddress teredo.remlab.net
 #ServerAddress2 teredo2.remlab.net
 #ServerAddress teredo.trex.fi
 
+# Link-local IPv4 multicast peer discovery (disabled by default)
+#LocalDiscovery enabled
+
 ## RELAY-SPECIFIC OPTION
 #InterfaceMTU 1280
