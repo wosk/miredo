@@ -47,8 +47,8 @@ client-hook: client-hook.$(hook_suffix)
 	$(AM_V_at)mv -f -- client-hook.tmp client-hook
 
 # systemd service
-dist_noinst_DATA += miredo.service-in
-systemd_DATA = miredo.service
+dist_noinst_DATA += miredo.service-in miredo-server.service-in
+systemd_DATA = miredo.service miredo-server.service
 
 .service-in.service:
 	$(AM_V_at)rm -f -- $@
