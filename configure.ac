@@ -45,6 +45,8 @@ AC_PROG_CC_C99
 AC_USE_SYSTEM_EXTENSIONS
 AC_DEFINE(_APPLE_C_SOURCE, 1, [Define to fix pthread_cancel() on Mac OS X.])
 
+AM_PROG_AR
+
 dnl Work-around for libtool bug (from Darren Salt)
 LT_PREREQ([2.2.0])
 LT_INIT
@@ -258,5 +260,5 @@ AH_BOTTOM([#include "compat/fixups.h"])
 
 # END
 AS_MESSAGE(writing results...)
-AC_CONFIG_FILES([Makefile m4/Makefile doc/Makefile misc/Makefile compat/Makefile libtun6/Makefile libteredo/Makefile src/Makefile po/Makefile.in Doxyfile])
+AC_CONFIG_FILES([Makefile m4/Makefile doc/Makefile misc/Makefile compat/Makefile libtun6/Makefile libteredo/Makefile po/Makefile.in Doxyfile])
 AC_OUTPUT

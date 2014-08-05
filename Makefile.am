@@ -22,14 +22,17 @@ AUTOMAKE_OPTIONS = 1.11 \
 	-Wall \
 	check-news \
 	std-options \
+	subdir-objects \
 	dist-xz \
 	no-dist-gzip \
 	no-exeext
 
-SUBDIRS = po doc misc compat libteredo libtun6 src
+SUBDIRS = po doc misc compat libteredo libtun6
 DIST_SUBDIRS = m4 $(SUBDIRS)
 noinst_HEADERS = include/gettext.h
 EXTRA_DIST = autogen.sh Doxyfile.in
+
+include src/Makefile.am
 
 doc: Doxyfile
 	doxygen $<

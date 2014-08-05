@@ -17,4 +17,7 @@ INSTALL
 libtool
 Makefile
 Makefile.in
+miredo
+miredo-checkconf
+miredo-server
 stamp-*

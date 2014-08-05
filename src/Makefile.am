@@ -17,15 +17,6 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-datadir = @datadir@
-localedir = $(datadir)/locale
-top_srcdir = @top_srcdir@
-sysconfdir = @sysconfdir@
-
-LIBINTL = @LIBINTL@
-LTLIBINTL = @LTLIBINTL@
-LIBCAP = @LIBCAP@
-
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
 	-DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
 	-DLOCALSTATEDIR=\"$(localstatedir)\" \
@@ -33,18 +24,15 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
 
 sbin_PROGRAMS = miredo miredo-server miredo-checkconf
 pkglibexec_PROGRAMS =
-EXTRA_PROGRAMS = privproc
 noinst_LTLIBRARIES = libmiredo.la
 TESTS =
 
-#BUILT_SOURCES = $(srcdir)/svnversion.stamp
-
 libmiredo_la_SOURCES = \
-	miredo.c miredo.h \
-	conf.c conf.h \
-	main.c
+	src/miredo.c src/miredo.h \
+	src/conf.c src/conf.h \
+	src/main.c
 libmiredo_la_LIBADD = $(LTLIBINTL) $(LIBCAP) \
-			../compat/libcompat.la
+			compat/libcompat.la
 libmiredo_la_LDFLAGS = -no-undefined -static
 #libmiredo_la_LDFLAGS = -no-undefined -release @VERSION@
 # libmiredo is dynamic only to reduce executables size (all the code is
@@ -53,24 +41,24 @@ libmiredo_la_LDFLAGS = -no-undefined -static
 # That is why we use -release at the moment.
 
 # miredo
-miredo_SOURCES = relayd.c
-miredo_LDADD = ../libtun6/libtun6.la ../libteredo/libteredo.la libmiredo.la \
-		@LIBRT@ $(LIBINTL)
+miredo_SOURCES = src/relayd.c
+miredo_LDADD = libtun6/libtun6.la libteredo/libteredo.la libmiredo.la \
+		$(LIBRT) $(LIBINTL)
 
 # privproc
-miredo_privproc_SOURCES = privproc.c privproc.h
-miredo_privproc_LDADD = ../libteredo/libteredo.la $(LIBCAP)
+miredo_privproc_SOURCES = src/privproc.c src/privproc.h
+miredo_privproc_LDADD = libteredo/libteredo.la $(LIBCAP)
 if TEREDO_CLIENT
 pkglibexec_PROGRAMS += miredo-privproc
 TESTS += miredo-checkconf
 endif
 
 # miredo-server
-miredo_server_SOURCES = serverd.c
-miredo_server_LDADD = ../libteredo/libteredo-server.la libmiredo.la $(LIBINTL)
+miredo_server_SOURCES = src/serverd.c
+miredo_server_LDADD = libteredo/libteredo-server.la libmiredo.la $(LIBINTL)
 
 # miredo-checkconf
-miredo_checkconf_SOURCES = checkconf.c
+miredo_checkconf_SOURCES = src/checkconf.c
 miredo_checkconf_LDADD = libmiredo.la $(LIBINTL)
 
 install-exec-local:
