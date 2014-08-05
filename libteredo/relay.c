@@ -622,7 +622,7 @@ void teredo_predecap (teredo_tunnel *restrict tunnel,
  * paragraph 5.4.2). That's called “Packet reception”.
  *
  * This function will NOT block if no packet are pending processing; it
- * will return immediatly.
+ * will return immediately.
  *
  * Thread-safety: This function is thread-safe.
  */
