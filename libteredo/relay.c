@@ -518,7 +518,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 			pthread_rwlock_unlock (&tunnel->state_lock);
 
 			if (d != NULL)
-				SendDiscoveryBubble (d, tunnel->fd);
+				teredo_discovery_send_bubbles (d, tunnel->fd);
 
 			teredo_discovery_release (d);
 		}

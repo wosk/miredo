@@ -29,11 +29,11 @@
 typedef struct teredo_discovery teredo_discovery;
 
 /**
- * Sends a discovery bubble.
+ * Sends discovery bubbles to all possible interfaces.
  *
- * @param fd socket to send the bubble from.
+ * @param fd socket to send the bubbles from.
  */
-void SendDiscoveryBubble (teredo_discovery *d, int fd);
+void teredo_discovery_send_bubbles (teredo_discovery *d, int fd);
 
 /**
  * Returns true if the given @p packet looks like a discovery bubble.

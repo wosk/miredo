@@ -74,30 +74,43 @@ static const struct in6_addr in6addr_allnodes =
 { { { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1 } } };
 
 
-void SendDiscoveryBubble (teredo_discovery *d, int fd)
+static int teredo_discovery_send_bubble (int fd, const struct in6_addr *src)
 {
-	struct ip_mreqn mreq;
-	int i, r;
+	return teredo_send_bubble (fd, htonl (TEREDO_DISCOVERY_IPV4),
+	                           htons (IPPORT_TEREDO), src, &in6addr_allnodes);
+}
 
-	for (i = 0; d->ifaces[i].addr; i++)
+void teredo_discovery_send_bubbles (teredo_discovery *d, int fd)
+{
+	const struct in6_addr *src = &d->src;
+#ifdef IP_MULTICAST_IF
+	/* Neither IETF nor POSIX standardized selecting the outgoing interface.
+     * But if we can, try to send a packet on each interface. */
+	struct if_nameindex *idx = if_nameindex();
+	if (idx != NULL)
 	{
-		memset (&mreq, 0, sizeof mreq);
-		mreq.imr_multiaddr.s_addr = htonl (TEREDO_DISCOVERY_IPV4);
-		mreq.imr_address.s_addr = d->ifaces[i].addr;
-		r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF,
-		                   &mreq, sizeof mreq);
-		if (r < 0)
+		struct ip_mreqn mreq;
+
+		memset (&mreq, 0, sizeof (mreq));
+
+		for (unsigned i = 0; idx[i].if_index != 0; i++)
 		{
-			debug ("Could not set multicast interface");
-			continue;
+			mreq.imr_ifindex = idx[i].if_index;
+
+			if (setsockopt (fd, SOL_IP, IP_MULTICAST_IF, &mreq, sizeof (mreq)))
+				continue;
+
+			teredo_discovery_send_bubble (fd, src);
 		}
 
-		teredo_send_bubble (fd, htonl (TEREDO_DISCOVERY_IPV4),
-		                    htons (IPPORT_TEREDO),
-		                    &d->src, &in6addr_allnodes);
+		if_freenameindex (idx);
+		/* No need to clear the multicast interface, as the socket should not
+		 * send multicast packets in any other circumstance. */
+		return;
 	}
-
-	debug ("discovery bubble sent");
+#endif
+	/* Fallback to default multicast interface only */
+	teredo_discovery_send_bubble (fd, src);
 }
 
 
@@ -117,7 +130,7 @@ static LIBTEREDO_NORETURN void *teredo_mcast_thread (void *opaque)
 
 	for (;;)
 	{
-		SendDiscoveryBubble (d, fd);
+		teredo_discovery_send_bubble (fd, &d->src);
 
 		int interval = 200 + teredo_get_flbits (teredo_clock ()) % 100;
 
