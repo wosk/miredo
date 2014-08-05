@@ -34,33 +34,53 @@
 
 #include "v4global.h"
 
-static void check (const char *str, bool glob)
+static void check (const char *str, bool glob, bool priv)
 {
 	uint32_t ip = inet_addr (str);
-	if (!!is_ipv4_global_unicast (ip) != glob)
+
+	if (is_ipv4_global_unicast (ip) != glob)
+	{
+		fprintf (stderr, "Error with %s\n", str);
+		exit (1);
+	}
+
+	if (is_ipv4_private_unicast (ip) != priv)
 	{
 		fprintf (stderr, "Error with %s\n", str);
 		exit (1);
 	}
 }
 
+static void check_glob (const char *str)
+{
+	check (str, true, false);
+}
+
+static void check_priv (const char *str)
+{
+	check (str, false, true);
+}
+
+static void check_misc (const char *str)
+{
+	check (str, false, false);
+}
 
 int main (void)
 {
-	check ("0.1.2.3", false);
-	check ("10.11.12.133", false);
-	check ("127.0.0.1", false);
-	check ("169.254.12.42", false);
-	check ("172.20.123.45", false);
-	check ("192.168.234.123", false);
-	check ("232.11.22.33", false);
-	check ("255.255.255.255", false);
-
-	check ("192.0.2.10", true);
-	check ("9.8.7.6", true);
-	check ("11.12.13.14", true);
-	check ("126.127.128.129", true);
-	check ("192.167.255.255", true);
-	check ("223.255.255.254", true);
+	check_misc ("0.1.2.3");
+	check_glob ("9.8.7.6");
+	check_priv ("10.11.12.133");
+	check_glob ("11.12.13.14");
+	check_glob ("126.127.128.129");
+	check_misc ("127.0.0.1");
+	check_priv ("169.254.12.42");
+	check_priv ("172.20.123.45");
+	check_glob ("192.0.2.10");
+	check_glob ("192.167.255.255");
+	check_priv ("192.168.234.123");
+	check_glob ("223.255.255.254");
+	check_misc ("232.11.22.33");
+	check_misc ("255.255.255.255");
 	return 0;
 }
