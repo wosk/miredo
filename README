@@ -44,9 +44,8 @@ IPv6, and do not allow forwarding of proto-41 (including 6to4).
 System requirements
 ====================
 
-  Miredo aims to support all POSIX-like open-source operating system
-kernels with IPv6 and userland layer-3 tunneling support. See below
-for system specific notes.
+  Miredo aims to support all POSIX.2008 operating systems with IPv6 and
+userland layer-3 tunneling support. See below for system specific notes.
 
   When available, Miredo can use the following optional libraries:
  - GNU gettext for localization,
