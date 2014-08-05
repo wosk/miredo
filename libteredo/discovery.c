@@ -55,7 +55,6 @@
 
 struct teredo_discovery
 {
-	int refcnt;
 	void (*proc)(void *, int);
 	void *opaque;
 	int fd;
@@ -181,8 +180,6 @@ teredo_discovery_start (const teredo_discovery_params *params,
 		return NULL;
 	}
 
-	d->refcnt = 1;
-
 	/* Get a list of the suitable interfaces */
 
 	r = getifaddrs(&ifaddrs);
@@ -259,48 +256,26 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	d->mcast_fd = fd;
 	if (pthread_create (&d->send, NULL, teredo_mcast_thread, d))
 	{
+		if (d->recv != NULL)
+			teredo_thread_stop (d->recv);
 		teredo_close (d->mcast_fd);
-		teredo_discovery_release (d);
-		d = NULL;
+
+		free (d->ifaces);
+		free (d);
+		return NULL;
 	}
 	return d;
 }
 
-
-struct teredo_discovery *teredo_discovery_grab (teredo_discovery *d)
+void teredo_discovery_stop (teredo_discovery *d)
 {
-	assert (d->refcnt);
-
-	d->refcnt++;
-	return d;
-}
-
-
-void teredo_discovery_release (teredo_discovery *d)
-{
-	assert (d->refcnt);
-
-	if (--d->refcnt)
-		return;
+	if (d->recv != NULL)
+		teredo_thread_stop (d->recv);
+	teredo_close(d->fd);
 
 	pthread_cancel (d->send);
 	pthread_join (d->send, NULL);
 
-	assert (d->recv == NULL);
-
 	free (d->ifaces);
 	free (d);
-}
-
-
-void teredo_discovery_stop (teredo_discovery *d)
-{
-	if (d->recv)
-	{
-		teredo_thread_stop (d->recv);
-		d->recv = NULL;
-	}
-
-	teredo_close(d->fd);
-	teredo_discovery_release(d);
 }
