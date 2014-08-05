@@ -591,15 +591,15 @@ teredo_islocal (teredo_tunnel *restrict tunnel,
 		return false; // local discovery disabled
 
 	if (IN6_TEREDO_PREFIX (&packet->ip6->ip6_src) != htonl (TEREDO_PREFIX))
-		return false; // not a teredo address
+		return false; // not a Teredo address
+
+	if (!is_ipv4_private_unicast (packet->source_ipv4))
+		return false; // non-matching source IPv4
 
 	union teredo_addr our = tunnel->state.addr;
 	uint32_t client_ip = IN6_TEREDO_IPV4 (&packet->ip6->ip6_src);
 	if ((client_ip ^ ~our.teredo.client_ip) & tunnel->disc_params->netmask)
 		return false; // non-matching mapped IPv4
-
-	if (!is_ipv4_discovered (tunnel->discovery, packet->source_ipv4))
-		return false; // non-matching source IPv4
 
 	return true;
 }
