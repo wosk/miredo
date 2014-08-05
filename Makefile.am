@@ -27,12 +27,14 @@ AUTOMAKE_OPTIONS = 1.11 \
 	no-dist-gzip \
 	no-exeext
 
+confdir = $(sysconfdir)/miredo
+
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
 	-DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
 	-DLOCALSTATEDIR=\"$(localstatedir)\" \
 	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
 
-SUBDIRS = po misc compat libteredo
+SUBDIRS = po compat libteredo
 DIST_SUBDIRS = m4 $(SUBDIRS)
 noinst_HEADERS = include/gettext.h
 EXTRA_DIST = autogen.sh Doxyfile.in
@@ -42,8 +44,10 @@ TESTS = $(check_PROGRAMS)
 
 DISTCLEANFILES = ChangeLog
 CLEANFILES =
+MOSTLYCLEANFILES =
 
 include doc/Makefile.am
+include misc/Makefile.am
 include libtun6/Makefile.am
 include src/Makefile.am
 
@@ -57,7 +61,6 @@ if CONF_SAMPLE
 # and copy their own default (or those in misc/) to @sysconfdir@/miredo/
 
 example = $(examplesdir)/miredo.conf
-confdir = $(sysconfdir)/miredo
 conf = $(confdir)/miredo.conf
 
 install-data-hook:

@@ -17,40 +17,36 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-confdir = $(sysconfdir)/miredo
 systemddir = $(libdir)/systemd/system
 
-MOSTLYCLEANFILES = $(examples_DATA) $(conf_SCRIPTS) $(systemd_DATA)
+MOSTLYCLEANFILES += $(examples_DATA) $(conf_SCRIPTS) $(systemd_DATA)
 
-sed_verbose = $(sed_verbose_$(V))
-sed_verbose_ = $(sed_verbose_$(AM_DEFAULT_VERBOSITY))
-sed_verbose_0 = @echo "  SED    $@";
 cat_verbose = $(cat_verbose_$(V))
 cat_verbose_ = $(cat_verbose_$(AM_DEFAULT_VERBOSITY))
-cat_verbose_0 = @echo "  CAT    $@";
+cat_verbose_0 = @echo "  CAT      $@";
 
 # Configuration files
-dist_noinst_DATA = miredo.conf-in miredo-server.conf-in
-examples_DATA = miredo.conf miredo-server.conf
+dist_noinst_DATA = misc/miredo.conf-in misc/miredo-server.conf-in
+examples_DATA = misc/miredo.conf misc/miredo-server.conf
 
 .conf-in.conf:
 	$(AM_V_at)rm -f -- $@
 	$(sed_verbose)sed -e 's,@sbindir\@,$(sbindir),g' < $< > $@
 
 # Hook scripts
-dist_noinst_SCRIPTS = client-hook.iproute client-hook.bsd
+dist_noinst_SCRIPTS = misc/client-hook.iproute misc/client-hook.bsd
 conf_SCRIPTS = client-hook
 
-client-hook: client-hook.$(hook_suffix)
-	$(cat_verbose)cat $(srcdir)/client-hook.$(hook_suffix) \
-		> client-hook.tmp
+client-hook: misc/client-hook.$(hook_suffix)
+	$(cat_verbose)cat $< > client-hook.tmp
 	$(AM_V_at)mv -f -- client-hook.tmp client-hook
 
 # systemd service
-dist_noinst_DATA += miredo.service-in miredo-server.service-in
-systemd_DATA = miredo.service miredo-server.service
+dist_noinst_DATA += misc/miredo.service-in misc/miredo-server.service-in
+systemd_DATA = misc/miredo.service misc/miredo-server.service
 
 .service-in.service:
+	$(AM_V_at)$(mkdir_p) misc
 	$(AM_V_at)rm -f -- $@
 	$(sed_verbose)sed \
 		-e 's,@sbindir\@,$(sbindir),g' \
