@@ -91,17 +91,14 @@ static int miredo_checkconf (miredo_conf *conf)
 	if (client)
 	{
 #ifdef MIREDO_TEREDO_CLIENT
-		uint32_t ip = 0;
-
-		if (!miredo_conf_parse_IPv4 (conf, "ServerAddress", &ip)
-		 || !miredo_conf_parse_IPv4 (conf, "ServerAddress2", &u32))
-			res = -1;
-
-		if (ip == 0)
+		char *name = miredo_conf_get (conf, "ServerAddress", NULL);
+		if (name == NULL)
 		{
 			fprintf (stderr, "%s\n", _("Server address not specified"));
 			res = -1;
 		}
+		free (name);
+		free (miredo_conf_get (conf, "ServerAddress2", NULL));
 #else
 		fprintf (stderr, "%s\n", _("Unsupported Teredo client mode"));
 		res = -1;
