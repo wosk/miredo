@@ -129,21 +129,6 @@ will be considered for the exchange of local discovery packets.
 .RB "A value of " "disabled" " (the default) will turn off local discovery "
 completely.
 
-.TP
-.BI "DiscoveryInterfaces " "regex"
-Restricts the network interfaces considered for local discovery
-to those whose names match the given regular expression.
-.IR "regex" " is a POSIX extended regular expression;"
-it is not anchored so be careful to include
-.BR "^" " and " "$" " if this is what you mean."
-
-.RI "For instance, on Linux, a " "regex" " of " "\fB^eth[0-9]"
-will restrict local discovery to operate
-on the regular ethernet interfaces only.
-You may specify a list of interfaces using the branch operator,
-.RB "as in " "^(eth0|eth1|ppp0)$" .
-See regex(7) for more information about regular expressions.
-
 .SH RELAY OPTIONS
 .RI "The following directives are only available in " "relay" " mode."
 .RI "They are not available in " "(auto)client" " mode."

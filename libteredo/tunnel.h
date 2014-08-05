@@ -33,7 +33,6 @@
 
 # include <stdbool.h>
 # include <stddef.h>
-# include <regex.h>
 
 # ifdef __cplusplus
 extern "C" {
