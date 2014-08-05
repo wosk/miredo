@@ -17,7 +17,8 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-SUBDIRS = . test
+AUTOMAKE_OPTIONS = subdir-objects
+
 localedir = @datadir@/locale
 LTLIBINTL = @LTLIBINTL@
 
@@ -75,3 +76,5 @@ libteredo_server_la_LDFLAGS = -no-undefined -static
 # teredo-mire
 teredo_mire_SOURCES = mire.c
 teredo_mire_LDADD = libteredo.la
+
+include test/Makefile.am
