@@ -138,27 +138,6 @@ static LIBTEREDO_NORETURN void *teredo_mcast_thread (void *opaque)
 	}
 }
 
-
-/* Join the Teredo local discovery multicast group on a given interface */
-static void teredo_discovery_joinmcast(int sk, uint32_t ifaddr)
-{
-	struct ip_mreqn mreq;
-	int r;
-	char addr[20];
-
-	memset (&mreq, 0, sizeof mreq);
-	mreq.imr_address.s_addr = ifaddr;
-	mreq.imr_multiaddr.s_addr = htonl (TEREDO_DISCOVERY_IPV4);
-	r = setsockopt (sk, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof mreq);
-
-	debug (r < 0 ? "Could not join the Teredo local discovery "
-	               "multicast group on interface %.20s"
-	             : "Listening for Teredo local discovery bubbles "
-	               "on interface %.20s",
-	       inet_ntop(AF_INET, &ifaddr, addr, sizeof addr));
-}
-
-
 static LIBTEREDO_NORETURN void *teredo_discovery_thread (void *data)
 {
 	teredo_discovery *d = data;
@@ -243,8 +222,13 @@ teredo_discovery_start (const teredo_discovery_params *params,
 		return NULL;
 	}
 
-	for (ifno = 0; d->ifaces[ifno].addr; ifno++)
-		teredo_discovery_joinmcast (d->fd, d->ifaces[ifno].addr);
+	struct ip_mreq mreq =
+	{
+		.imr_multiaddr = { .s_addr = htonl (TEREDO_DISCOVERY_IPV4) },
+	};
+
+	if (setsockopt (d->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof mreq))
+		debug ("Local discovery multicast subscription failure: %m");
 
 	d->opaque = opaque;
 	d->proc = proc;
