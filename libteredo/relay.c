@@ -598,7 +598,8 @@ teredo_islocal (teredo_tunnel *restrict tunnel,
 
 	union teredo_addr our = tunnel->state.addr;
 	uint32_t client_ip = IN6_TEREDO_IPV4 (&packet->ip6->ip6_src);
-	if ((client_ip ^ ~our.teredo.client_ip) & tunnel->disc_params->netmask)
+
+	if (client_ip != our.teredo.client_ip)
 		return false; // non-matching mapped IPv4
 
 	return true;

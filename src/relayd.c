@@ -526,7 +526,6 @@ relay_run (miredo_conf *conf, const char *server_name)
 	teredo_discovery_params ldp =
 	{
 		.forced = false,
-		.netmask = 0xffffffff,
 		.ifname_re = &preg,
 	}, *disc_params = &ldp;
 #endif
@@ -559,8 +558,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 		}
 
 		if (!ParseLocalDiscovery (conf, "LocalDiscovery", &disc_params)
-		 || !ParseDiscoveryInterfaces (conf, "DiscoveryInterfaces", &ldp.ifname_re)
-		 || !miredo_conf_parse_IPv4 (conf, "DiscoveryNetmask", &ldp.netmask))
+		 || !ParseDiscoveryInterfaces (conf, "DiscoveryInterfaces", &ldp.ifname_re))
 		{
 			syslog (LOG_ALERT, _("Fatal configuration error"));
 			return -2;

@@ -177,12 +177,6 @@ typedef struct teredo_discovery_params
 	 */
 	regex_t *ifname_re;
 
-	/**
-	 * Netmask (in network byte order) for comparing the mapped external
-	 * IPv4 address of the local clients with our own.
-	 */
-	uint32_t netmask;
-
 } teredo_discovery_params;
 
 /**

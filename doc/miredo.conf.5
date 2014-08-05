@@ -145,22 +145,6 @@ You may specify a list of interfaces using the branch operator,
 .RB "as in " "^(eth0|eth1|ppp0)$" .
 See regex(7) for more information about regular expressions.
 
-.TP
-.BI "DiscoveryNetmask " "netmask"
-Specifies which Teredo addresses are accepted from local peers.
-An IPv6 Teredo address embeds a client's external IPv4 address.
-When receiving announcements from the local networks,
-Miredo compares this external address with its own.
-.RI "The " "netmask" " parameter, written in dotted-quad IPv4 notation,"
-specifies which bits of the address should match.
-
-.RB "A value of " "255.255.255.255" " (the default)"
-will restrict the accepted local peers to those with the
-exact same external IPv4 address as ours,
-and silently ignore announcements from other clients.
-.RB "On the other hand, if " "\fInetmask" " is " "0.0.0.0" ,
-any local client will be accepted, regardless of its external address.
-
 .SH RELAY OPTIONS
 .RI "The following directives are only available in " "relay" " mode."
 .RI "They are not available in " "(auto)client" " mode."
