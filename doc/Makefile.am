@@ -17,14 +17,14 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-man1_MANS = teredo-mire.1
-man5_MANS = miredo.conf.5 miredo-server.conf.5
-man8_MANS = miredo.8 miredo-server.8 miredo-checkconf.8
+man1_MANS = doc/teredo-mire.1
+man5_MANS = doc/miredo.conf.5 doc/miredo-server.conf.5
+man8_MANS = doc/miredo.8 doc/miredo-server.8 doc/miredo-checkconf.8
 SOURCES_MAN = $(man1_MANS) $(man5_MANS) \
-	miredo.8-in miredo-server.8-in miredo-checkconf.8-in
+	doc/miredo.8-in doc/miredo-server.8-in doc/miredo-checkconf.8-in
 
-EXTRA_DIST = $(SOURCES_MAN)
-CLEANFILES = $(man8_MANS)
+EXTRA_DIST += $(SOURCES_MAN)
+CLEANFILES += $(man8_MANS)
 
 edit = sed \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
@@ -34,9 +34,10 @@ $(man8_MANS): Makefile
 
 sed_verbose = $(sed_verbose_$(V))
 sed_verbose_ = $(sed_verbose_$(AM_DEFAULT_VERBOSITY))
-sed_verbose_0 = @echo "  SED    $@";
+sed_verbose_0 = @echo "  SED      $@";
 
 .8-in.8:
+	$(AM_V_at)$(mkdir_p) doc
 	$(AM_V_at)rm -f -- $@
 	$(sed_verbose)$(edit) $< > $@
 

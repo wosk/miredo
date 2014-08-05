@@ -260,5 +260,5 @@ AH_BOTTOM([#include "compat/fixups.h"])
 
 # END
 AS_MESSAGE(writing results...)
-AC_CONFIG_FILES([Makefile m4/Makefile doc/Makefile misc/Makefile compat/Makefile libteredo/Makefile po/Makefile.in Doxyfile])
+AC_CONFIG_FILES([Makefile m4/Makefile misc/Makefile compat/Makefile libteredo/Makefile po/Makefile.in Doxyfile])
 AC_OUTPUT

@@ -32,7 +32,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
 	-DLOCALSTATEDIR=\"$(localstatedir)\" \
 	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
 
-SUBDIRS = po doc misc compat libteredo
+SUBDIRS = po misc compat libteredo
 DIST_SUBDIRS = m4 $(SUBDIRS)
 noinst_HEADERS = include/gettext.h
 EXTRA_DIST = autogen.sh Doxyfile.in
@@ -40,6 +40,10 @@ EXTRA_DIST = autogen.sh Doxyfile.in
 check_PROGRAMS =
 TESTS = $(check_PROGRAMS)
 
+DISTCLEANFILES = ChangeLog
+CLEANFILES =
+
+include doc/Makefile.am
 include libtun6/Makefile.am
 include src/Makefile.am
 
@@ -82,11 +86,6 @@ install-data-hook:
 uninstall-hook:
 	rm -f -- "$(DESTDIR)$(conf)"
 endif
-
-DISTCLEANFILES = ChangeLog
-
-distcheck-hook:
-	cd doc && $(MAKE) $(AM_MAKEFLAGS) distcheck-hook
 
 # ChangeLog
 ChangeLog:
