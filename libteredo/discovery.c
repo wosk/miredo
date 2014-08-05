@@ -57,11 +57,11 @@ struct teredo_discovery
 {
 	void (*proc)(void *, int);
 	void *opaque;
-	int fd;
-	int mcast_fd;
+	int send_fd;
+	int recv_fd;
 	struct in6_addr src;
-	teredo_thread *recv;
-	pthread_t send;
+	teredo_thread *recv_thread;
+	pthread_t send_thread;
 };
 
 
@@ -121,11 +121,10 @@ bool IsDiscoveryBubble (const teredo_packet *restrict packet)
 static LIBTEREDO_NORETURN void *teredo_mcast_thread (void *opaque)
 {
 	teredo_discovery *d = opaque;
-	int fd = d->mcast_fd;
 
 	for (;;)
 	{
-		teredo_discovery_send_bubble (fd, &d->src);
+		teredo_discovery_send_bubble (d->send_fd, &d->src);
 
 		int interval = 200 + teredo_get_flbits (teredo_clock ()) % 100;
 
@@ -134,11 +133,12 @@ static LIBTEREDO_NORETURN void *teredo_mcast_thread (void *opaque)
 	}
 }
 
-static LIBTEREDO_NORETURN void *teredo_discovery_thread (void *data)
+static void *teredo_discovery_thread (void *data)
 {
 	teredo_discovery *d = data;
 
-	d->proc (d->opaque, d->fd);
+	d->proc (d->opaque, d->recv_fd);
+	return NULL; /* dead */
 }
 
 teredo_discovery *
@@ -146,16 +146,14 @@ teredo_discovery_start (const teredo_discovery_params *params,
                         int fd, const struct in6_addr *src,
                         void (*proc)(void *, int fd), void *opaque)
 {
-	teredo_discovery *d = malloc (sizeof (teredo_discovery));
+	teredo_discovery *d = malloc (sizeof (*d));
 	if (d == NULL)
-	{
 		return NULL;
-	}
 
 	/* Setup the multicast-receiving socket */
 
-	d->fd = teredo_socket (0, htons (IPPORT_TEREDO));
-	if (d->fd == -1)
+	d->recv_fd = teredo_socket (0, htons (IPPORT_TEREDO));
+	if (d->recv_fd == -1)
 	{
 		debug ("Could not create the local discovery socket");
 		free (d);
@@ -167,23 +165,25 @@ teredo_discovery_start (const teredo_discovery_params *params,
 		.imr_multiaddr = { .s_addr = htonl (TEREDO_DISCOVERY_IPV4) },
 	};
 
-	if (setsockopt (d->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof mreq))
+	if (setsockopt (d->recv_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+	                &mreq, sizeof mreq))
 		debug ("Local discovery multicast subscription failure: %m");
 
 	d->opaque = opaque;
 	d->proc = proc;
-	d->recv = teredo_thread_start (teredo_discovery_thread, d);
+	d->send_fd = fd;
+	d->src = *src;
+
+	d->recv_thread = teredo_thread_start (teredo_discovery_thread, d);
 
 	/* Start the discovery procedure thread */
 
-	memcpy (&d->src, src, sizeof d->src);
-	d->mcast_fd = fd;
-	if (pthread_create (&d->send, NULL, teredo_mcast_thread, d))
+	if (pthread_create (&d->send_thread, NULL, teredo_mcast_thread, d))
 	{
-		if (d->recv != NULL)
-			teredo_thread_stop (d->recv);
-		teredo_close (d->mcast_fd);
+		if (d->recv_thread != NULL)
+			teredo_thread_stop (d->recv_thread);
 
+		teredo_close (d->recv_fd);
 		free (d);
 		return NULL;
 	}
@@ -192,12 +192,12 @@ teredo_discovery_start (const teredo_discovery_params *params,
 
 void teredo_discovery_stop (teredo_discovery *d)
 {
-	if (d->recv != NULL)
-		teredo_thread_stop (d->recv);
-	teredo_close(d->fd);
+	if (d->recv_thread != NULL)
+		teredo_thread_stop (d->recv_thread);
 
-	pthread_cancel (d->send);
-	pthread_join (d->send, NULL);
+	pthread_cancel (d->send_thread);
+	pthread_join (d->send_thread, NULL);
 
+	teredo_close(d->recv_fd);
 	free (d);
 }
