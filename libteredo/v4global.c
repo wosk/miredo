@@ -23,14 +23,14 @@
 # include <config.h>
 #endif
 
-#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <netinet/in.h> // ntohl()
 
 #include "v4global.h"
 
-int
-is_ipv4_global_unicast (uint32_t ip)
+bool is_ipv4_global_unicast (uint32_t ip)
 {
 	/*
 	 * NOTE (FIXME)
@@ -69,8 +69,20 @@ is_ipv4_global_unicast (uint32_t ip)
 
 	if ((ip & htonl (0x10000000)) == 0)
 		// Whole class D space (multicast) is forbidden:
-		return 0;
+		return false;
 
 	return ip != htonl (0xffffffff);
 }
 
+bool is_ipv4_private_unicast (uint32_t ip)
+{
+	if ((ip & htonl (0xffff0000)) == htonl (0xc0a80000))
+		return true; // 192.168.0.0/16
+	if ((ip & htonl (0xfff00000)) == htonl (0xac100000))
+		return true; // 172.16.0.0/12
+	if ((ip & htonl (0xff000000)) == htonl (0x0a000000))
+		return true; // 10.0.0.0/8
+	if ((ip & htonl (0xffff0000)) == htonl (0xa9fe0000))
+		return true; // 169.254.0.0/16
+	return false;
+}
