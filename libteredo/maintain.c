@@ -393,9 +393,7 @@ teredo_maintenance_create (int fd, teredo_state_cb cb, void *opaque,
 		pthread_condattr_t attr;
 
 		pthread_condattr_init (&attr);
-#if (_POSIX_CLOCK_SELECTION > 0) && (_POSIX_MONOTONIC_CLOCK >= 0)
-		pthread_condattr_setclock (&attr, CLOCK_MONOTONIC);
-#endif
+		pthread_condattr_setclock (&attr, teredo_clock_id);
 		pthread_cond_init (&m->received, &attr);
 		pthread_condattr_destroy (&attr);
 	}
