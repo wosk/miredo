@@ -59,10 +59,6 @@ struct teredo_discovery
 	void *opaque;
 	int fd;
 	int mcast_fd;
-	struct teredo_discovery_interface
-	{
-		uint32_t addr;
-	} *ifaces;
 	struct in6_addr src;
 	teredo_thread *recv;
 	pthread_t send;
@@ -150,66 +146,11 @@ teredo_discovery_start (const teredo_discovery_params *params,
                         int fd, const struct in6_addr *src,
                         void (*proc)(void *, int fd), void *opaque)
 {
-	struct ifaddrs *ifaddrs, *ifa;
-	int r, ifno;
-
 	teredo_discovery *d = malloc (sizeof (teredo_discovery));
 	if (d == NULL)
 	{
 		return NULL;
 	}
-
-	/* Get a list of the suitable interfaces */
-
-	r = getifaddrs(&ifaddrs);
-	if (r < 0)
-	{
-		debug ("Could not enumerate interfaces for local discovery");
-		free (d);
-		return NULL;
-	}
-
-	d->ifaces = NULL;
-	ifno = 0;
-
-	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next)
-	{
-		struct teredo_discovery_interface *list = d->ifaces;
-		struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
-
-		if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET)
-			continue;
-		if (!(ifa->ifa_flags & IFF_MULTICAST))
-			continue;
-
-		if (!params->forced
-		 && is_ipv4_global_unicast (sa->sin_addr.s_addr))
-			continue;
-		if (params->ifname_re
-		 && regexec(params->ifname_re, ifa->ifa_name, 0, NULL, 0) != 0)
-			continue;
-
-		list = realloc (list, (ifno + 2) * sizeof (*d->ifaces));
-		if(list == NULL)
-		{
-			debug ("Out of memory.");
-			break; // memory error
-		}
-
-		d->ifaces = list;
-		d->ifaces[ifno].addr = sa->sin_addr.s_addr;
-		ifno++;
-	}
-
-	freeifaddrs(ifaddrs);
-
-	if (d->ifaces == NULL)
-	{
-		debug ("No suitable interfaces found for local discovery");
-		free (d);
-		return NULL;
-	}
-	d->ifaces[ifno].addr = 0;
 
 	/* Setup the multicast-receiving socket */
 
@@ -217,7 +158,6 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	if (d->fd == -1)
 	{
 		debug ("Could not create the local discovery socket");
-		free (d->ifaces);
 		free (d);
 		return NULL;
 	}
@@ -244,7 +184,6 @@ teredo_discovery_start (const teredo_discovery_params *params,
 			teredo_thread_stop (d->recv);
 		teredo_close (d->mcast_fd);
 
-		free (d->ifaces);
 		free (d);
 		return NULL;
 	}
@@ -260,6 +199,5 @@ void teredo_discovery_stop (teredo_discovery *d)
 	pthread_cancel (d->send);
 	pthread_join (d->send, NULL);
 
-	free (d->ifaces);
 	free (d);
 }
