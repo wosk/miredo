@@ -17,22 +17,15 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-localedir = @datadir@/locale
-
-AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@ \
-	-D_REENTRANT -DLOCALEDIR=\"$(localedir)\"
-LIBINTL = @LIBINTL@
-
 lib_LTLIBRARIES = libtun6.la
-check_PROGRAMS = libtun6-diagnose
-TESTS = $(check_PROGRAMS)
+check_PROGRAMS += libtun6-diagnose
 
 include_libtun6dir = $(includedir)/libtun6
-include_libtun6_HEADERS = tun6.h
+include_libtun6_HEADERS = libtun6/tun6.h
 
 # libtun6.a
-libtun6_la_SOURCES = tun6.c
-libtun6_la_LIBADD = @LTLIBINTL@ ../compat/libcompat.la
+libtun6_la_SOURCES = libtun6/tun6.c
+libtun6_la_LIBADD = @LTLIBINTL@ compat/libcompat.la
 libtun6_la_LDFLAGS = -no-undefined -export-symbols-regex tun6_.* \
 	-version-info 2:0:0
 
@@ -43,5 +36,5 @@ libtun6_la_LDFLAGS = -no-undefined -export-symbols-regex tun6_.* \
 # 2) libtun6_diagnose() removed
 
 # libtun6-diagnose
-libtun6_diagnose_SOURCES = test_diag.c
+libtun6_diagnose_SOURCES = libtun6/test_diag.c
 libtun6_diagnose_LDADD = libtun6.la

@@ -27,11 +27,20 @@ AUTOMAKE_OPTIONS = 1.11 \
 	no-dist-gzip \
 	no-exeext
 
-SUBDIRS = po doc misc compat libteredo libtun6
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
+	-DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
+	-DLOCALSTATEDIR=\"$(localstatedir)\" \
+	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
+
+SUBDIRS = po doc misc compat libteredo
 DIST_SUBDIRS = m4 $(SUBDIRS)
 noinst_HEADERS = include/gettext.h
 EXTRA_DIST = autogen.sh Doxyfile.in
 
+check_PROGRAMS =
+TESTS = $(check_PROGRAMS)
+
+include libtun6/Makefile.am
 include src/Makefile.am
 
 doc: Doxyfile

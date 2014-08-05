@@ -17,15 +17,9 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
-	-DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
-	-DLOCALSTATEDIR=\"$(localstatedir)\" \
-	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
-
 sbin_PROGRAMS = miredo miredo-server miredo-checkconf
 pkglibexec_PROGRAMS =
 noinst_LTLIBRARIES = libmiredo.la
-TESTS =
 
 libmiredo_la_SOURCES = \
 	src/miredo.c src/miredo.h \
@@ -42,7 +36,7 @@ libmiredo_la_LDFLAGS = -no-undefined -static
 
 # miredo
 miredo_SOURCES = src/relayd.c
-miredo_LDADD = libtun6/libtun6.la libteredo/libteredo.la libmiredo.la \
+miredo_LDADD = libtun6.la libteredo/libteredo.la libmiredo.la \
 		$(LIBRT) $(LIBINTL)
 
 # privproc
