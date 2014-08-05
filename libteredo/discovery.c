@@ -142,8 +142,7 @@ static void *teredo_discovery_thread (void *data)
 }
 
 teredo_discovery *
-teredo_discovery_start (const teredo_discovery_params *params,
-                        int fd, const struct in6_addr *src,
+teredo_discovery_start (int fd, const struct in6_addr *src,
                         void (*proc)(void *, int fd), void *opaque)
 {
 	teredo_discovery *d = malloc (sizeof (*d));

@@ -71,7 +71,7 @@ struct teredo_tunnel
 	
 	teredo_state_up_cb up_cb;
 	teredo_state_down_cb down_cb;
-	const teredo_discovery_params *disc_params;
+	bool disc;
 #endif
 	teredo_recv_cb recv_cb;
 	teredo_icmpv6_cb icmpv6_cb;
@@ -209,14 +209,12 @@ teredo_state_change (const teredo_state *state, void *self)
 		       inet_ntop (AF_INET, &tunnel->state.ipv4, b, sizeof (b)));
 #endif
 
-		if (tunnel->disc_params)
+		if (tunnel->disc)
 		{
-			teredo_discovery *d;
-			d = teredo_discovery_start (tunnel->disc_params,
-			                            tunnel->fd,
-						    &tunnel->state.addr.ip6,
-						    teredo_recv_loop, tunnel);
-			tunnel->discovery = d;
+			tunnel->discovery = teredo_discovery_start (tunnel->fd,
+			                                            &state->addr.ip6,
+			                                            teredo_recv_loop,
+			                                            tunnel);
 		}
 	}
 	else
@@ -581,7 +579,7 @@ static bool
 teredo_islocal (teredo_tunnel *restrict tunnel,
                 const struct teredo_packet *restrict packet)
 {
-	if (!tunnel->disc_params || !tunnel->discovery)
+	if (tunnel->discovery == NULL)
 		return false; // local discovery disabled
 
 	if (IN6_TEREDO_PREFIX (&packet->ip6->ip6_src) != htonl (TEREDO_PREFIX))
@@ -1206,20 +1204,14 @@ int teredo_set_client_mode (teredo_tunnel *restrict t,
 }
 
 
-int teredo_set_discovery_params (teredo_tunnel *restrict t,
-                                 const teredo_discovery_params *p)
+void teredo_set_local_discovery (teredo_tunnel *restrict t, bool on)
 {
 	assert (t != NULL);
 #ifdef MIREDO_TEREDO_CLIENT
-	if (!IsClient(t))
-		return -1;
-
-	t->disc_params = p;
-	return 0;
+	t->disc = on;
 #else
 	(void)t;
-	(void)p;
-	return -1;
+	(void)on;
 #endif
 }
 

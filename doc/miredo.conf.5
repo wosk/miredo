@@ -123,12 +123,11 @@ Local discovery works by sending multicast packets
 on the local network interfaces at regular intervals,
 announcing a client's Teredo address.
 
-.RI "If " "mode" " is " "\fBenabled" " (the default),"
+.RI "If " "mode" " is " "\fBenabled" ","
 all the multicast-capable network interfaces with a local IPv4 address
 will be considered for the exchange of local discovery packets.
-.RI "If " "mode" " is " "\fBforced" ,
-interfaces with a global address will be considered as well.
-.RB "A value of " "disabled" " will turn off local discovery completely."
+.RB "A value of " "disabled" " (the default) will turn off local discovery "
+completely.
 
 .TP
 .BI "DiscoveryInterfaces " "regex"

@@ -191,8 +191,7 @@ ParseRelayType (miredo_conf *conf, const char *name, int *type)
 
 
 static bool
-ParseLocalDiscovery (miredo_conf *conf, const char *name,
-                     teredo_discovery_params **disc_params)
+ParseLocalDiscovery (miredo_conf *conf, const char *name, bool *restrict on)
 {
 	unsigned line;
 	char *val = miredo_conf_get (conf, name, &line);
@@ -201,13 +200,10 @@ ParseLocalDiscovery (miredo_conf *conf, const char *name,
 		return true;
 
 	if (strcasecmp (val, "enabled") == 0)
-		(*disc_params)->forced = false;
-	else
-	if (strcasecmp (val, "forced") == 0)
-		(*disc_params)->forced = false;
+		*on = true;
 	else
 	if (strcasecmp (val, "disabled") == 0)
-		*disc_params = NULL;
+		*on = false;
 	else
 	{
 		syslog (LOG_ERR, _("Invalid discovery mode \"%s\" at line %u"),
@@ -216,39 +212,6 @@ ParseLocalDiscovery (miredo_conf *conf, const char *name,
 		return false;
 	}
 	free (val);
-	return true;
-}
-
-
-static bool
-ParseDiscoveryInterfaces (miredo_conf *conf, const char *name, regex_t **preg)
-{
-	unsigned line;
-	char *val = miredo_conf_get (conf, name, &line);
-
-	if (val == NULL)
-	{
-		*preg = NULL;
-		return true;
-	}
-
-	int r = regcomp (*preg, val, REG_EXTENDED);
-	if (r != 0)
-	{
-		char err[100];
-		regerror (r, *preg, err, sizeof err);
-
-		/* TRANSLATORS: the second %s is an error message for the
-		 * failed regex compilation */
-		syslog (LOG_ERR, _("Invalid regex \"%s\" at line %u: %s"),
-		        val, line, err);
-
-		free (val);
-		regfree (*preg);
-		return false;
-	}
-
-	free(val);
 	return true;
 }
 
@@ -377,17 +340,14 @@ miredo_down_callback (void *data)
 
 static int
 setup_client (teredo_tunnel *client, const char *server, const char *server2,
-              teredo_discovery_params *disc_params)
+              bool discovery)
 {
-	int r;
-
 	teredo_set_state_cb (client, miredo_up_callback, miredo_down_callback);
-	r = teredo_set_client_mode (client, server, server2);
+	if (teredo_set_client_mode (client, server, server2))
+		return -1;
 
-	if (disc_params && r == 0)
-		r = teredo_set_discovery_params (client, disc_params);
-
-	return r;
+	teredo_set_local_discovery (client, discovery);
+	return 0;
 }
 #else
 # define create_dynamic_tunnel( a, b )   NULL
@@ -521,13 +481,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 #ifdef MIREDO_TEREDO_CLIENT
 	const char *server_name2 = NULL;
 	char namebuf[NI_MAXHOST], namebuf2[NI_MAXHOST];
-
-	regex_t preg;
-	teredo_discovery_params ldp =
-	{
-		.forced = false,
-		.ifname_re = &preg,
-	}, *disc_params = &ldp;
+	bool discovery = false;
 #endif
 	uint16_t mtu = 1280;
 	bool cone = false;
@@ -557,8 +511,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 			}
 		}
 
-		if (!ParseLocalDiscovery (conf, "LocalDiscovery", &disc_params)
-		 || !ParseDiscoveryInterfaces (conf, "DiscoveryInterfaces", &ldp.ifname_re))
+		if (!ParseLocalDiscovery (conf, "LocalDiscovery", &discovery))
 		{
 			syslog (LOG_ALERT, _("Fatal configuration error"));
 			return -2;
@@ -583,7 +536,7 @@ relay_run (miredo_conf *conf, const char *server_name)
 	}
 
 	uint32_t bind_ip = INADDR_ANY;
-	uint16_t bind_port = 
+	uint16_t bind_port =
 #if 0
 		/*
 		 * We use 3545 as a Teredo service port.
@@ -650,9 +603,9 @@ relay_run (miredo_conf *conf, const char *server_name)
 
 				retval = (mode & TEREDO_CLIENT)
 					? setup_client (relay, server_name, server_name2,
-					                disc_params)
+					                discovery)
 					: setup_relay (relay, cone);
-	
+
 				/*
 				 * RUN
 				 */

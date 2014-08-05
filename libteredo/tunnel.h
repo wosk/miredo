@@ -159,41 +159,16 @@ int teredo_set_client_mode (teredo_tunnel *restrict t, const char *s1,
                             const char *s2);
 
 /**
- * Parameters for the local client discovery procedure.
- */
-typedef struct teredo_discovery_params
-{
-	/**
-	 * Specifies whether the network interfaces with a global address
-	 * should be considered for local discovery.
-	 */
-	bool forced;
-
-	/**
-	 * Regular expression for network interface filtering.
-	 * If this is a non-@c NULL pointer to a @c regex_t object (initialized
-	 * with regcomp()), only the network interfaces whose names match this
-	 * regex will be considered for local discovery.
-	 */
-	regex_t *ifname_re;
-
-} teredo_discovery_params;
-
-/**
  * Enables the Teredo local client discovery procedure.
- * teredo_set_client_mode() must have been called for the given tunnel prior to
- * invoking this function.
+ * This function has no effects if the tunnel is not in client mode.
+ *
+ * @note This function must <b>not</b> be used after teredo_transmit() or
+ * teredo_run_async() the specified tunnel. That is undefined.
  *
  * @param t Tereo tunnel instance
- * @param p local discovery parameters
- *
- * Thread-safety: This function is thread-safe.
- *
- * @return 0 on success, -1 in case of error.
- * In case of error, the teredo_tunnel instance is not modifed.
+ * @param on whether to enable (true) or disable (false) local discovery
  */
-int teredo_set_discovery_params (teredo_tunnel *restrict t,
-                                 const teredo_discovery_params *p);
+void teredo_set_local_discovery (teredo_tunnel *restrict t, bool on);
 
 /**
  * Sets the private data pointer of a Teredo tunnel instance.
