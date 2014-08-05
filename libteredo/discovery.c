@@ -63,7 +63,6 @@ struct teredo_discovery
 	struct teredo_discovery_interface
 	{
 		uint32_t addr;
-		uint32_t mask;
 	} *ifaces;
 	struct in6_addr src;
 	teredo_thread *recv;
@@ -73,18 +72,6 @@ struct teredo_discovery
 
 static const struct in6_addr in6addr_allnodes =
 { { { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1 } } };
-
-
-bool is_ipv4_discovered (teredo_discovery *d, uint32_t ip)
-{
-	int i;
-
-	for (i = 0; d->ifaces[i].addr; i++)
-		if (((ip ^ d->ifaces[i].addr) & d->ifaces[i].mask) == 0)
-			return true;
-
-	return false;
-}
 
 
 void SendDiscoveryBubble (teredo_discovery *d, int fd)
@@ -200,7 +187,6 @@ teredo_discovery_start (const teredo_discovery_params *params,
 	{
 		struct teredo_discovery_interface *list = d->ifaces;
 		struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
-		struct sockaddr_in *ma = (struct sockaddr_in *) ifa->ifa_netmask;
 
 		if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET)
 			continue;
@@ -223,7 +209,6 @@ teredo_discovery_start (const teredo_discovery_params *params,
 
 		d->ifaces = list;
 		d->ifaces[ifno].addr = sa->sin_addr.s_addr;
-		d->ifaces[ifno].mask = ma->sin_addr.s_addr;
 		ifno++;
 	}
 
