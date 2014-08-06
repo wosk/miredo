@@ -19,7 +19,7 @@
 
 sbin_PROGRAMS = miredo miredo-server miredo-checkconf
 pkglibexec_PROGRAMS =
-noinst_LTLIBRARIES = libmiredo.la
+noinst_LTLIBRARIES += libmiredo.la
 
 libmiredo_la_SOURCES = \
 	src/miredo.c src/miredo.h \
@@ -36,12 +36,12 @@ libmiredo_la_LDFLAGS = -no-undefined -static
 
 # miredo
 miredo_SOURCES = src/relayd.c
-miredo_LDADD = libtun6.la libteredo/libteredo.la libmiredo.la \
+miredo_LDADD = libtun6.la libteredo.la libmiredo.la \
 		$(LIBRT) $(LIBINTL)
 
 # privproc
 miredo_privproc_SOURCES = src/privproc.c src/privproc.h
-miredo_privproc_LDADD = libteredo/libteredo.la $(LIBCAP)
+miredo_privproc_LDADD = libteredo.la $(LIBCAP)
 if TEREDO_CLIENT
 pkglibexec_PROGRAMS += miredo-privproc
 TESTS += miredo-checkconf
@@ -49,7 +49,7 @@ endif
 
 # miredo-server
 miredo_server_SOURCES = src/serverd.c
-miredo_server_LDADD = libteredo/libteredo-server.la libmiredo.la $(LIBINTL)
+miredo_server_LDADD = libteredo-server.la libmiredo.la $(LIBINTL)
 
 # miredo-checkconf
 miredo_checkconf_SOURCES = src/checkconf.c

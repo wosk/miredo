@@ -34,10 +34,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
 	-DLOCALSTATEDIR=\"$(localstatedir)\" \
 	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
 
-SUBDIRS = po compat libteredo
+SUBDIRS = po compat
 DIST_SUBDIRS = m4 $(SUBDIRS)
 noinst_HEADERS = include/gettext.h
+noinst_LTLIBRARIES =
 EXTRA_DIST = autogen.sh Doxyfile.in
+
+lib_LTLIBRARIES =
 
 check_PROGRAMS =
 TESTS = $(check_PROGRAMS)
@@ -49,6 +52,7 @@ MOSTLYCLEANFILES =
 include doc/Makefile.am
 include misc/Makefile.am
 include libtun6/Makefile.am
+include libteredo/Makefile.am
 include src/Makefile.am
 
 doc: Doxyfile

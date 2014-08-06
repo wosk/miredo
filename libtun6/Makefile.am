@@ -17,7 +17,7 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-lib_LTLIBRARIES = libtun6.la
+lib_LTLIBRARIES += libtun6.la
 check_PROGRAMS += libtun6-diagnose
 
 include_libtun6dir = $(includedir)/libtun6

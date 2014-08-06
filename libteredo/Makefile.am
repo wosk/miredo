@@ -17,39 +17,45 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-AUTOMAKE_OPTIONS = subdir-objects
-
-localedir = @datadir@/locale
-LTLIBINTL = @LTLIBINTL@
-
-AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@ \
-	-D_REENTRANT -DLOCALEDIR=\"$(localedir)\"
-
-LIBADD = ../compat/libcompat.la libteredo-common.la
-
-noinst_LTLIBRARIES = libteredo-common.la libteredo-server.la
-lib_LTLIBRARIES = libteredo.la
+noinst_LTLIBRARIES += libteredo-common.la libteredo-server.la
+lib_LTLIBRARIES += libteredo.la
 bin_PROGRAMS = teredo-mire
-EXTRA_DIST = libteredo.sym
+EXTRA_DIST += libteredo/libteredo.sym
 
 include_libteredodir = $(includedir)/libteredo
-include_libteredo_HEADERS = teredo.h teredo-udp.h tunnel.h
+include_libteredo_HEADERS = \
+	libteredo/teredo.h \
+	libteredo/teredo-udp.h \
+	libteredo/tunnel.h
 
 # libteredo-common.la
-libteredo_common_la_SOURCES =	teredo.c v4global.c v4global.h \
-				checksum.h debug.h
+libteredo_common_la_SOURCES = \
+	libteredo/teredo.c \
+	libteredo/v4global.c libteredo/v4global.h \
+	libteredo/checksum.h libteredo/debug.h
 libteredo_common_la_LDFLAGS = -no-undefined
 
 # libteredo.la
-libteredo_la_SOURCES =	relay.c security.c security.h md5.c md5.h \
-			packets.c packets.h peerlist.c peerlist.h \
-			clock.c clock.h thread.h stub.c
+libteredo_la_SOURCES = \
+	libteredo/security.c libteredo/security.h \
+	libteredo/md5.c libteredo/md5.h \
+	libteredo/packets.c libteredo/packets.h \
+	libteredo/peerlist.c libteredo/peerlist.h \
+	libteredo/clock.c libteredo/clock.h \
+	libteredo/thread.h libteredo/stub.c \
+	libteredo/relay.c
 if TEREDO_CLIENT
-libteredo_la_SOURCES += maintain.c maintain.h discovery.c discovery.h
+libteredo_la_SOURCES += \
+	libteredo/maintain.c libteredo/maintain.h \
+	libteredo/discovery.c libteredo/discovery.h
 endif
-libteredo_la_DEPENDENCIES = libteredo.sym $(LIBADD)
-libteredo_la_LIBADD = @LIBJUDY@ @LIBRT@ $(LTLIBINTL) $(LIBADD)
-libteredo_la_LDFLAGS = -no-undefined -export-symbols $(srcdir)/libteredo.sym \
+libteredo_la_DEPENDENCIES = libteredo/libteredo.sym libteredo-common.la
+libteredo_la_LIBADD = \
+	libteredo-common.la compat/libcompat.la \
+	$(LIBJUDY) $(LIBRT) $(LTLIBINTL)
+libteredo_la_LDFLAGS = \
+	-no-undefined \
+	-export-symbols $(srcdir)/libteredo/libteredo.sym \
 	-version-info 6:0:0
 
 # libteredo versions:
@@ -66,15 +72,17 @@ libteredo_la_LDFLAGS = -no-undefined -export-symbols $(srcdir)/libteredo.sym \
 #    removed (1.3.0)
 
 # libteredo-server.la
-libteredo_server_la_SOURCES = server.c server.h
-libteredo_server_la_LIBADD = $(LTLIBINTL) $(LIBADD)
+libteredo_server_la_SOURCES = libteredo/server.c libteredo/server.h
+libteredo_server_la_LIBADD = \
+	libteredo-common.la compat/libcompat.la \
+	$(LTLIBINTL)
 libteredo_server_la_LDFLAGS = -no-undefined -static
 # libteredo-server is static given it hardly make sense to reuse it
 # outside miredo-server (which is itself way less commonly used
 # than miredo)
 
 # teredo-mire
-teredo_mire_SOURCES = mire.c
+teredo_mire_SOURCES = libteredo/mire.c
 teredo_mire_LDADD = libteredo.la
 
-include test/Makefile.am
+include libteredo/test/Makefile.am
