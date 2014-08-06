@@ -17,14 +17,11 @@
 # *  http://www.gnu.org/copyleft/gpl.html                               *
 # ***********************************************************************
 
-AM_CPPFLAGS = -D_REENTRANT -I@top_srcdir@
-
 noinst_LTLIBRARIES = libcompat.la
-libcompat_la_SOURCES = fixups.h dummy.c
+libcompat_la_SOURCES = compat/fixups.h compat/dummy.c
 libcompat_la_LIBADD = $(LTLIBOBJS)
 libcompat_la_LDFLAGS = -no-undefined
 
-check_PROGRAMS = test-strlcpy
-TESTS = $(check_PROGRAMS)
-test_strlcpy_SOURCES = test-strlcpy.c
+check_PROGRAMS += test-strlcpy
+test_strlcpy_SOURCES = compat/test-strlcpy.c
 test_strlcpy_LDADD = libcompat.la

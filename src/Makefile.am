@@ -25,8 +25,7 @@ libmiredo_la_SOURCES = \
 	src/miredo.c src/miredo.h \
 	src/conf.c src/conf.h \
 	src/main.c
-libmiredo_la_LIBADD = $(LTLIBINTL) $(LIBCAP) \
-			compat/libcompat.la
+libmiredo_la_LIBADD = $(LTLIBINTL) $(LIBCAP) libcompat.la
 libmiredo_la_LDFLAGS = -no-undefined -static
 #libmiredo_la_LDFLAGS = -no-undefined -release @VERSION@
 # libmiredo is dynamic only to reduce executables size (all the code is

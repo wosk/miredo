@@ -51,7 +51,7 @@ libteredo_la_SOURCES += \
 endif
 libteredo_la_DEPENDENCIES = libteredo/libteredo.sym libteredo-common.la
 libteredo_la_LIBADD = \
-	libteredo-common.la compat/libcompat.la \
+	libteredo-common.la libcompat.la \
 	$(LIBJUDY) $(LIBRT) $(LTLIBINTL)
 libteredo_la_LDFLAGS = \
 	-no-undefined \
@@ -74,7 +74,7 @@ libteredo_la_LDFLAGS = \
 # libteredo-server.la
 libteredo_server_la_SOURCES = libteredo/server.c libteredo/server.h
 libteredo_server_la_LIBADD = \
-	libteredo-common.la compat/libcompat.la \
+	libteredo-common.la libcompat.la \
 	$(LTLIBINTL)
 libteredo_server_la_LDFLAGS = -no-undefined -static
 # libteredo-server is static given it hardly make sense to reuse it

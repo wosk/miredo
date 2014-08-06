@@ -25,7 +25,7 @@ include_libtun6_HEADERS = libtun6/tun6.h
 
 # libtun6.a
 libtun6_la_SOURCES = libtun6/tun6.c
-libtun6_la_LIBADD = @LTLIBINTL@ compat/libcompat.la
+libtun6_la_LIBADD = libcompat.la $(LTLIBINTL)
 libtun6_la_LDFLAGS = -no-undefined -export-symbols-regex tun6_.* \
 	-version-info 2:0:0
 

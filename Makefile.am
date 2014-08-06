@@ -34,8 +34,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir) -D_REENTRANT \
 	-DLOCALSTATEDIR=\"$(localstatedir)\" \
 	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
 
-SUBDIRS = po compat
-DIST_SUBDIRS = m4 $(SUBDIRS)
+SUBDIRS = po
+DIST_SUBDIRS = m4 po
 noinst_HEADERS = include/gettext.h
 noinst_LTLIBRARIES =
 EXTRA_DIST = autogen.sh Doxyfile.in
@@ -49,6 +49,7 @@ DISTCLEANFILES = ChangeLog
 CLEANFILES =
 MOSTLYCLEANFILES =
 
+include compat/Makefile.am
 include doc/Makefile.am
 include misc/Makefile.am
 include libtun6/Makefile.am
