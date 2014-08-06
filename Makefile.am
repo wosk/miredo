@@ -21,7 +21,6 @@ ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = 1.11 \
 	-Wall \
 	check-news \
-	std-options \
 	subdir-objects \
 	dist-xz \
 	no-dist-gzip \
