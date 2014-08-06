@@ -30,6 +30,7 @@ dist_noinst_DATA = misc/miredo.conf-in misc/miredo-server.conf-in
 examples_DATA = misc/miredo.conf misc/miredo-server.conf
 
 .conf-in.conf:
+	$(AM_V_at)$(mkdir_p) misc
 	$(AM_V_at)rm -f -- $@
 	$(sed_verbose)sed -e 's,@sbindir\@,$(sbindir),g' < $< > $@
 
