@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 		const char *srcdir = getenv ("srcdir");
 
 		if (srcdir != NULL)
-			filename = "../misc/miredo.conf";
+			filename = "misc/miredo.conf";
 		else
 			filename = conffile;
 	}
