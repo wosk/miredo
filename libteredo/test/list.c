@@ -25,7 +25,6 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h> // putenv()
 
 #include <inttypes.h> /* for Mac OS X */
@@ -36,13 +35,6 @@
 #include "teredo.h"
 #include "clock.h"
 #include "peerlist.h"
-
-
-static void wait (unsigned sec)
-{
-	printf ("Waiting %d second%s...\n", sec, (sec != 1) ? "s" : "");
-	nanosleep (&(struct timespec){ sec, 0 }, NULL);
-}
 
 
 static teredo_peer *
