@@ -76,8 +76,17 @@ static int test_list (teredo_peerlist *l)
 	for (unsigned i = 0; i < 256; i++)
 	{
 		addr.s6_addr[12] = i;
-		if ((i & 1) ? !try_insert (l, &addr) : try_lookup (l, &addr))
-			return -1;
+
+		if (i & 1)
+		{
+			if (!try_insert (l, &addr))
+				return -1;
+		}
+		else
+		{
+			if (try_lookup (l, &addr))
+				return -1;
+		}
 	}
 
 	puts ("Initial lookup test...");
@@ -85,23 +94,44 @@ static int test_list (teredo_peerlist *l)
 	for (unsigned i = 0; i < 256; i++)
 	{
 		addr.s6_addr[12] = i;
-		if ((i & 1) != try_lookup (l, &addr))
-			return -1;
+
+		if (i & 1)
+		{
+			if (!try_lookup (l, &addr))
+				return -1;
+		}
+		else
+		{
+			if (try_lookup (l, &addr))
+				return -1;
+		}
 	}
 
-	wait (1);
+	//wait (1);
 	addr.s6_addr[0] = 1;
 	puts ("Further insertion test...");
 	for (unsigned i = 0; i < 256; i++)
 	{
-
 		addr.s6_addr[12] = i;
-		if ((i & 1) ? ((i < 255) != try_insert (l, &addr))
-		            : try_lookup (l, &addr))
-			// items 1, 3...253 should have been created
-			// items 255 should cause an overflow
-			// items 0, 2... 254 did not exist and should not have been found
-			return -1;
+
+		if (i & 1)
+		{
+			if (i < 255)
+			{	// items 1, 3...253 should be created
+				if (!try_insert (l, &addr))
+					return -1;
+			}
+			else
+			{	// item 255 should cause an overflow
+				if (try_insert (l, &addr))
+					return -1;
+			}
+		}
+		else
+		{	// items 0, 2... 254 do not exist and should not be found
+			if (try_lookup (l, &addr))
+				return -1;
+		}
 	}
 
 	puts ("Lookup test...");
@@ -110,53 +140,23 @@ static int test_list (teredo_peerlist *l)
 		addr.s6_addr[0] = 0;
 		addr.s6_addr[12] = i;
 
-		if (((i & 3) == 3) && !try_lookup (l, &addr))
-			// item was created earlier
-			return -1;
-
-		addr.s6_addr[0] = 1;
-		if (((i & 1) && (i < 255)) != try_lookup (l, &addr))
-			return -1;
-	}
-
-	wait (2);
-	puts ("Further lookup test...");
-	for (unsigned i = 0; i < 256; i++)
-	{
-		addr.s6_addr[0] = 0;
-		addr.s6_addr[12] = i;
 		if ((i & 3) == 3)
-		{
+		{	// item was created earlier
 			if (!try_lookup (l, &addr))
 				return -1;
 		}
 
 		addr.s6_addr[0] = 1;
-		if (((i & 1) && (i != 255)) != try_lookup (l, &addr))
-			return -1;
-	}
-
-	wait (2);
-	addr.s6_addr[0] = 0;
-
-	puts ("Partial expiration test...");
-	for (unsigned i = 0; i < 256; i++)
-	{
-		addr.s6_addr[12] = i;
-		if ((i & 3) == 3)
-			continue;
-		if (try_lookup (l, &addr))
-			return -1;
-	}
-
-	wait (5);
-
-	puts ("Full expiration test...");
-	for (unsigned i = 0; i < 256; i++)
-	{
-		addr.s6_addr[12] = i;
-		if ((i & 1) ? !try_insert (l, &addr) : try_lookup (l,  &addr))
-			return -1;
+		if ((i & 1) && i < 255)
+		{
+			if (!try_lookup (l, &addr))
+				return -1;
+		}
+		else
+		{
+			if (try_lookup (l, &addr))
+				return -1;
+		}
 	}
 
 	return 0;
@@ -214,10 +214,6 @@ int main (void)
 	if (l == NULL)
 		return -1;
 
-	if (test_list (l))
-		return 1;
-
-	wait (7);
 	if (test_list (l))
 		return 1;
 
