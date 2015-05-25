@@ -93,7 +93,7 @@ to change the tunneling network interface settings automatically. To
 .IR "separation" ". The process that handles data from the network is"
 not privileged.
 
-While that is not specific to nor dependant on Miredo, it should be
+While that is not specific to nor dependent on Miredo, it should be
 noted that Teredo connectivity allows anyone behind a NAT to obtain
 global public IPv6 connectivity. It might break some corporate policy.
 If that is an issue, outgoing UDP packets with destination port 3544
