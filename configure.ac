@@ -57,7 +57,7 @@ AM_SILENT_RULES([yes])
 # Checks for libraries.
 AS_MESSAGE([checking required libraries...])
 AM_GNU_GETTEXT_VERSION([0.19.8])
-AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT([external], [need-formatstring-macros])
 
 LIBRT=""
 AC_CHECK_LIB(rt, clock_gettime, [LIBRT="-lrt"])
