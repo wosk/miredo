@@ -107,8 +107,8 @@ ChangeLog:
 
 # m4 macros
 EXTRA_DIST += m4/codeset.m4 m4/fcntl-o.m4 m4/flags.m4 m4/getopt.m4 \
-	m4/gettext.m4 m4/glibc21.m4 m4/glibc2.m4 m4/hostname.m4 m4/iconv.m4 \
-	m4/intdiv0.m4 m4/intldir.m4 m4/intlmacosx.m4 m4/intl.m4 m4/intmax.m4 \
+	m4/gettext.m4 m4/glibc21.m4 m4/glibc2.m4 m4/iconv.m4 m4/intdiv0.m4 \
+	m4/intldir.m4 m4/intlmacosx.m4 m4/intl.m4 m4/intmax.m4 \
 	m4/inttypes_h.m4 m4/inttypes-pri.m4 m4/lcmessage.m4 m4/lib-ld.m4 \
 	m4/lib-link.m4 m4/lib-prefix.m4 m4/libtool.m4 m4/lock.m4 \
 	m4/longlong.m4 m4/lt~obsolete.m4 m4/ltoptions.m4 m4/ltsugar.m4 \

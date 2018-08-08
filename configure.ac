@@ -34,7 +34,6 @@ AC_CONFIG_HEADERS(config.h)
 
 AC_DEFINE_UNQUOTED(PACKAGE_CONFIGURE_INVOCATION, "$INVOCATION",
                 [Define to the command line used to invoke the configure script.])
-RDC_BUILD_HOSTNAME
 AC_CANONICAL_HOST
 
 
