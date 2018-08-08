@@ -21,6 +21,7 @@ sbin_PROGRAMS = miredo miredo-server miredo-checkconf
 pkglibexec_PROGRAMS =
 noinst_LTLIBRARIES += libmiredo.la
 
+libmiredo_la_DEPENDENCIES = libcompat.la
 libmiredo_la_SOURCES = \
 	src/miredo.c src/miredo.h \
 	src/conf.c src/conf.h \
