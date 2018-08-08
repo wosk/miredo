@@ -104,8 +104,6 @@ AS_IF([test "${PTHREAD_LDFAGS}${PTHREAD_LIBS}"], [
 	AC_CHECK_LIB(pthread, pthread_create)
 ])
 
-AC_DEFINE_UNQUOTED(PACKAGE_BUILD, "$build",
-                   [Define to the canonical build-system name])
 AC_DEFINE_UNQUOTED(PACKAGE_HOST, "$host",
                    [Define to the canonical host-system name])
 

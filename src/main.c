@@ -93,8 +93,8 @@ miredo_version (void)
 # define VERSION "unknown version"
 #endif
 	printf (_("Miredo: Teredo IPv6 tunneling software %s (%s)\n"
-	          " built %s (%s)\n"),
-	        VERSION, PACKAGE_HOST, __DATE__, PACKAGE_BUILD);
+	          " built %s\n"),
+	        VERSION, PACKAGE_HOST, __DATE__);
 	printf (_("Configured with: %s\n"), PACKAGE_CONFIGURE_INVOCATION);
 	puts (_("Written by Remi Denis-Courmont.\n"));
 
