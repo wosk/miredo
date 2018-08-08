@@ -56,7 +56,7 @@ AM_SILENT_RULES([yes])
 
 # Checks for libraries.
 AS_MESSAGE([checking required libraries...])
-AM_GNU_GETTEXT_VERSION([0.19.2])
+AM_GNU_GETTEXT_VERSION([0.19.8])
 AM_GNU_GETTEXT([external])
 
 LIBRT=""
