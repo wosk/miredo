@@ -343,14 +343,13 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 {
 	assert (tunnel != NULL);
 
-	const union teredo_addr *dst =
-		(const union teredo_addr *)&packet->ip6_dst;
+	const struct in6_addr *dst = &packet->ip6_dst;
 #ifndef NDEBUG
    	char b[INET6_ADDRSTRLEN];
 #endif
 
 	/* Drops multicast destination, we cannot handle these */
-	if (dst->ip6.s6_addr[0] == 0xff)
+	if (dst->s6_addr[0] == 0xff)
 		return 0;
 
 	teredo_state s;
@@ -371,7 +370,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 	}
 #endif
 
-	if (dst->teredo.prefix != htonl (TEREDO_PREFIX))
+	if (IN6_TEREDO_PREFIX(dst) != htonl(TEREDO_PREFIX))
 	{
 		/* Non-Teredo destination */
 #ifdef MIREDO_TEREDO_CLIENT
@@ -395,7 +394,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 			// Teredo relays only routes toward Teredo clients.
 			// The routing table must be misconfigured.
 			debug ("Unacceptable destination: %s",
-			       inet_ntop (AF_INET6, &dst->ip6.s6_addr, b, sizeof b));
+			       inet_ntop(AF_INET6, dst->s6_addr, b, sizeof (b)));
 			teredo_send_unreach (tunnel, ICMP6_DST_UNREACH_ADDR,
 			                     packet, length);
 			return 0;
@@ -404,7 +403,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 	else
 	{
 		/* Teredo destination */
-		assert (dst->teredo.prefix == htonl (TEREDO_PREFIX));
+		assert(IN6_TEREDO_PREFIX(dst) == htonl (TEREDO_PREFIX));
 		/*
 		 * Ignores Teredo clients with incorrect server IPv4.
 		 * This check is only specified for client case 4 & 5.
@@ -418,7 +417,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 		 * in it, which avoids a double peer list lookup (failed lookup, then
 		 * insertion), which is a big time saver under heavy load.
 		 */
-		uint32_t peer_server = IN6_TEREDO_SERVER(&dst->ip6);
+		uint32_t peer_server = IN6_TEREDO_SERVER(dst);
 		if (!is_ipv4_global_unicast (peer_server) || (peer_server == 0))
 		{
 #ifndef NDEBUG
@@ -433,7 +432,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 	teredo_clock_t now = teredo_clock ();
 	struct teredo_peerlist *list = tunnel->list;
 
-	teredo_peer *p = teredo_list_lookup (list, &dst->ip6, &created);
+	teredo_peer *p = teredo_list_lookup(list, dst, &created);
 	if (p == NULL)
 		return -1; /* error */
 
@@ -462,7 +461,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 
 #ifdef MIREDO_TEREDO_CLIENT
 	/* Untrusted non-Teredo node */
-	if (dst->teredo.prefix != htonl (TEREDO_PREFIX))
+	if (IN6_TEREDO_PREFIX(dst) != htonl(TEREDO_PREFIX))
 	{
 		int res;
 
@@ -481,14 +480,14 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 		teredo_list_release (list);
 
 		if (res == 0)
-			res = SendPing (tunnel->fd, &s.addr, &dst->ip6);
+			res = SendPing(tunnel->fd, &s.addr, dst);
 
 		if (res == -1)
 			teredo_send_unreach (tunnel, ICMP6_DST_UNREACH_ADDR,
 			                     packet, length);
 
 		debug ("%s: ping returned %d",
-		       inet_ntop (AF_INET6, &dst->ip6, b, sizeof (b)), res);
+		       inet_ntop(AF_INET6, dst, b, sizeof (b)), res);
 		return 0;
 	}
 
@@ -505,8 +504,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 
 		if (res == 0)
 		{
-			teredo_send_bubble (tunnel->fd, addr, port,
-			                    &s.addr.ip6, &dst->ip6);
+			teredo_send_bubble(tunnel->fd, addr, port, &s.addr.ip6, dst);
 
 			pthread_rwlock_rdlock (&tunnel->state_lock);
 			if (tunnel->discovery != NULL)
@@ -527,11 +525,11 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 
 	if (created)
 		/* Unknown Teredo clients */
-		SetMapping (p, IN6_TEREDO_IPV4(&dst->ip6), IN6_TEREDO_PORT(&dst->ip6));
+		SetMapping(p, IN6_TEREDO_IPV4(dst), IN6_TEREDO_PORT(dst));
 
 #ifdef LIBTEREDO_ALLOW_CONE
 	/* Client case 4 & relay case 2: new cone peer */
-	if (IN6_IS_TEREDO_ADDR_CONE(&dst->ip6))
+	if (IN6_IS_TEREDO_ADDR_CONE(dst))
 	{
 		p->trusted = 1;
 		p->bubbles = /*p->pings -USELESS- =*/ 0;
@@ -553,10 +551,10 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 			 * restricted NAT.
 			 */
 			if (!(s.addr.teredo.flags & htons (TEREDO_FLAG_CONE))
-			 && SendBubbleFromDst (tunnel->fd, &dst->ip6, false))
+			 && SendBubbleFromDst(tunnel->fd, dst, false))
 				return -1;
 
-			return SendBubbleFromDst (tunnel->fd, &dst->ip6, true);
+			return SendBubbleFromDst(tunnel->fd, dst, true);
 
 		case -1: // Too many bubbles already sent
 			teredo_send_unreach (tunnel, ICMP6_DST_UNREACH_ADDR,
