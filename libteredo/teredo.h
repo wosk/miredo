@@ -32,6 +32,8 @@
 #  endif
 # endif
 
+# include <string.h>
+
 /* UDP Teredo port number */
 #define IPPORT_TEREDO 3544
 
@@ -71,22 +73,55 @@ union teredo_addr
 #define TEREDO_FLAG_RANDOM	0x4000
 #define TEREDO_RANDOM_MASK	0x3cff
 
-#define ip6_teredo( ip6 ) (&((const union teredo_addr *)(ip6))->teredo)
-
 /* NOTE: these macros expect 4-byte aligned addresses structs */
 #define IN6_IS_TEREDO_ADDR_CONE(ip6) \
 	((IN6_TEREDO_FLAGS(ip6) & htons(TEREDO_FLAG_CONE)) != 0)
 
-#define IN6_TEREDO_PREFIX( ip6 ) \
-	(ip6_teredo (ip6)->prefix)
-#define IN6_TEREDO_SERVER( ip6 ) \
-	(ip6_teredo (ip6)->server_ip)
-#define IN6_TEREDO_IPV4( ip6 ) \
-	(ip6_teredo (ip6)->client_ip ^ 0xffffffff)
-#define IN6_TEREDO_PORT( ip6 ) \
-	(ip6_teredo (ip6)->client_port ^ 0xffff)
-#define IN6_TEREDO_FLAGS( ip6 ) \
-	(ip6_teredo (ip6)->flags)
+static inline uint32_t in6_teredo_prefix(const struct in6_addr *ip6)
+{
+	uint32_t prefix;
+
+	memcpy(&prefix, ip6->s6_addr, 4);
+	return prefix;
+}
+#define IN6_TEREDO_PREFIX(ip6)  in6_teredo_prefix(ip6)
+
+static inline uint32_t in6_teredo_server(const struct in6_addr *ip6)
+{
+	uint32_t server_ip;
+
+	memcpy(&server_ip, ip6->s6_addr + 4, 4);
+	return server_ip;
+}
+#define IN6_TEREDO_SERVER(ip6)	in6_teredo_server(ip6)
+
+static inline uint32_t in6_teredo_ipv4(const struct in6_addr *ip6)
+{
+	uint32_t client_ip;
+
+	memcpy(&client_ip, ip6->s6_addr + 12, 4);
+	return ~client_ip;
+}
+#define IN6_TEREDO_IPV4(ip6)	in6_teredo_ipv4(ip6)
+
+static inline uint16_t in6_teredo_port(const struct in6_addr *ip6)
+{
+	uint16_t client_port;
+
+	memcpy(&client_port, ip6->s6_addr + 10, 2);
+	return ~client_port;
+}
+#define IN6_TEREDO_PORT(ip6)	in6_teredo_port(ip6)
+
+static inline uint16_t in6_teredo_flags(const struct in6_addr *ip6)
+{
+	uint16_t flags;
+
+	memcpy(&flags, ip6->s6_addr + 8, 2);
+	return flags;
+
+}
+#define IN6_TEREDO_FLAGS(ip6)	in6_teredo_flags(ip6)
 
 #define IN6_MATCHES_TEREDO_CLIENT( ip6, ip4, port ) \
 	in6_matches_teredo_client (ip6, ip4, port)
