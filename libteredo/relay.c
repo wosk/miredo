@@ -376,10 +376,9 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 #ifdef MIREDO_TEREDO_CLIENT
 		if (IsClient (tunnel))
 		{
-			const union teredo_addr *src =
-				(const union teredo_addr *)&packet->ip6_src;
+			const struct in6_addr *src = &packet->ip6_src;
 
-			if (src->teredo.prefix != htonl (TEREDO_PREFIX))
+			if (IN6_TEREDO_PREFIX(src) != htonl(TEREDO_PREFIX))
 			{
 				// Teredo servers and relays would reject the packet
 				// if it does not have a Teredo source.
