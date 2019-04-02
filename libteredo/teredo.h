@@ -74,8 +74,8 @@ union teredo_addr
 #define ip6_teredo( ip6 ) (&((const union teredo_addr *)(ip6))->teredo)
 
 /* NOTE: these macros expect 4-byte aligned addresses structs */
-#define IN6_IS_TEREDO_ADDR_CONE( ip6 ) \
-	(ip6_teredo (ip6)->flags & htons (TEREDO_FLAG_CONE))
+#define IN6_IS_TEREDO_ADDR_CONE(ip6) \
+	((IN6_TEREDO_FLAGS(ip6) & htons(TEREDO_FLAG_CONE)) != 0)
 
 #define IN6_TEREDO_PREFIX( ip6 ) \
 	(ip6_teredo (ip6)->prefix)
