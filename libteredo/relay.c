@@ -418,7 +418,7 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 		 * in it, which avoids a double peer list lookup (failed lookup, then
 		 * insertion), which is a big time saver under heavy load.
 		 */
-		uint32_t peer_server = IN6_TEREDO_SERVER (dst);
+		uint32_t peer_server = IN6_TEREDO_SERVER(&dst->ip6);
 		if (!is_ipv4_global_unicast (peer_server) || (peer_server == 0))
 		{
 #ifndef NDEBUG
@@ -527,11 +527,11 @@ int teredo_transmit (teredo_tunnel *restrict tunnel,
 
 	if (created)
 		/* Unknown Teredo clients */
-		SetMapping (p, IN6_TEREDO_IPV4 (dst), IN6_TEREDO_PORT (dst));
+		SetMapping (p, IN6_TEREDO_IPV4(&dst->ip6), IN6_TEREDO_PORT(&dst->ip6));
 
 #ifdef LIBTEREDO_ALLOW_CONE
 	/* Client case 4 & relay case 2: new cone peer */
-	if (IN6_IS_TEREDO_ADDR_CONE (dst))
+	if (IN6_IS_TEREDO_ADDR_CONE(&dst->ip6))
 	{
 		p->trusted = 1;
 		p->bubbles = /*p->pings -USELESS- =*/ 0;
