@@ -1,6 +1,7 @@
 [Unit]
 Description=Teredo IPv6 tunneling
-After=network.target
+Wants=network-online.target
+After=network-online.target nss-lookup.target
 
 [Service]
 ExecStartPre=@sbindir@/miredo-checkconf -f @sysconfdir@/miredo/miredo.conf
